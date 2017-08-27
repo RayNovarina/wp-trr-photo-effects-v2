@@ -19,10 +19,8 @@ jQuery( document ).ready(function() {
     /*4-Resume here when done*/ function( returnObj ) {
     plugin.generateAnimationElements(
     /*5-Resume here when done*/ function( returnObj ) {
-    plugin.addScrollEvents(
-    /*6-Resume here when done*/ function( returnObj ) {
     plugin.statusLog( "  ..*1c.main.js: Init done *" );
-    /*6-*/});/*5-*/});/*4-*/});/*3-*/});/*2-*/});/*1-*/});
+    /*5-*/});/*4-*/});/*3-*/});/*2-*/});/*1-*/});
 
     return plugin;
   } ( jQuery, TrrPePlugin || {} ) );

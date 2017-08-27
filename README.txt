@@ -5,7 +5,7 @@ based on:
     per: https://greensock.com/jump-start-js
          https://greensock.com/get-started-js#intro
     javascript module pattern per: http://www.adequatelygood.com/JavaScript-Module-Pattern-In-Depth.html
-    
+
 local dev path for this file:
   /Applications/MAMP/htdocs/Sites/wordpress-5-trr-staging/wp-content/plugins/trr-photo-effects-v2/README.txt
 
@@ -143,4 +143,34 @@ for(var i=0, j=particles.length;i<j;i++){
     ctx.fillRect(particle.x, particle.y, 1, 1);
 }
 
-----------------------------
+=================================
+boneyard snippets:
+=================================
+
+
+  //----------------------------------------------------------------------------
+  plugin.addScrollEvents = function( callback ) {
+    //--------------------------------------------------------------------------
+    console.log( "  ..*1a: scroll_events.js: plugin.addScrollEvents() For " + plugin.globals.photos.length + " photos.*" );
+
+    var last_photo = plugin.globals.photos.length - 1;
+    $.each( plugin.globals.photos, function( index, el ) {
+      var $el = $(el),
+          photoTag = plugin.globals.photoTags[ index ];
+      $el.attr( 'id', ('trr-pe-photo-' + (index + '') ) )
+         .attr( 'trr-pe-photo-idx', index + '' )
+         .attr( 'trr-pe-tag', photoTag );
+      $el.data( 'previousProfile', ( index == 0 ? undefined : plugin.globals.photos[ index - 1 ]) );
+      $el.data( 'previousProfileTag', ( index == 0 ? undefined : plugin.globals.photoTags[ index - 1 ]) );
+      $el.data( 'nextProfile', ( index == last_photo ? undefined : plugin.globals.photos[ index + 1 ]) );
+      $el.data( 'nextProfile', ( index == last_photo ? undefined : plugin.globals.photos[ index + 1 ]) );
+      add_scroll_event( index, $el, plugin.globals.photoTags[ index ],
+      /*1a-Resume here when done*/ function() {
+      if ( index == last_photo ) {
+        plugin.statusLog( "  ..*1a: scroll_events.js: END data to html conversion.*" );
+        if ( typeof callback == 'function' ) { callback( null ); return; }
+        return null;
+      }
+      /*1a-*/});
+    }); // end of $.each(photos)
+  }; // end: addScrollEvents()

@@ -6,7 +6,7 @@ var TrrPePlugin = ( function( $, plugin ) {
     console.log( "  ..*1a: globals.js: plugin.createGlobals() *" );
 
     plugin.statusLog = function( msg ) {
-      console.log( "  ..*1a: init.js: plugin.statusLog()*" );
+      //console.log( "  ..*1a: init.js: plugin.statusLog()*" );
       if ( msg == 'init-done') {
         console.log(' ');
         console.log('******************************************');
@@ -18,18 +18,6 @@ var TrrPePlugin = ( function( $, plugin ) {
         console.log(' ');
         console.log('******************************************');
         console.log('********* Start CLICK Event **************');
-        console.log('******************************************');
-
-      } else if ( msg.indexOf('..*6a:') != -1) {
-        console.log(' ');
-        console.log('******************************************');
-        console.log('*********** Start SWAP IN ****************');
-        console.log('******************************************');
-
-      } else if (msg.indexOf('..*6b:') != -1) {
-        console.log(' ');
-        console.log('******************************************');
-        console.log('********** Start SWAP OUT ****************');
         console.log('******************************************');
 
       } else if (msg.indexOf('..*7:') != -1) {
