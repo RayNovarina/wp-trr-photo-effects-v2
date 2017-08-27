@@ -4,7 +4,8 @@ based on:
     AtomProjects/harp/gsap-sandbox-halftone/
     per: https://greensock.com/jump-start-js
          https://greensock.com/get-started-js#intro
-
+    javascript module pattern per: http://www.adequatelygood.com/JavaScript-Module-Pattern-In-Depth.html
+    
 local dev path for this file:
   /Applications/MAMP/htdocs/Sites/wordpress-5-trr-staging/wp-content/plugins/trr-photo-effects-v2/README.txt
 
@@ -12,7 +13,7 @@ browser access: start OSX Mamp. Apache server at localhost:8888
   browser only access: http://localhost:8888/Sites/wordpress-5-exploding-profiles/management-team/
 
 github repository:
-  https://github.com/RayNovarina/wp-trr-phpto-effects-v2.git
+  https://github.com/RayNovarina/wp-trr-photo-effects-v2.git
 staging site:
   http://trafficrevenueresults.com/management-team/
 
