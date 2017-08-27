@@ -1,12 +1,12 @@
 "use strict";
 
 var TrrPePlugin = ( function( $, plugin ) {
-  console.log( "  ..*1a: globals.js: loaded. *" );
+  console.log( "  ..*2a: globals.js: loaded. *" );
   plugin.createGlobals = function( callback ) {
-    console.log( "  ..*1a: globals.js: plugin.createGlobals() *" );
+    console.log( "  ..*2a: globals.js: plugin.createGlobals() *" );
 
     plugin.statusLog = function( msg ) {
-      //console.log( "  ..*1a: init.js: plugin.statusLog()*" );
+      //console.log( "  ..*2a: init.js: plugin.statusLog()*" );
       if ( msg == 'init-done') {
         console.log(' ');
         console.log('******************************************');
@@ -14,7 +14,7 @@ var TrrPePlugin = ( function( $, plugin ) {
         console.log('******************************************');
         return;
 
-      } else if (msg.indexOf('..*8:') != -1) {
+      } else if (msg.indexOf('..*x:') != -1) {
         console.log(' ');
         console.log('******************************************');
         console.log('********* Start CLICK Event **************');

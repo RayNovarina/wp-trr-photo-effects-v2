@@ -1,13 +1,13 @@
 "use strict";
 
 var TrrPePlugin = ( function( $, plugin ) {
-  console.log( "  ..*1a: init.js: loaded. *" );
+  console.log( "  ..*3: init.js: loaded. *" );
   //alert( 'init.js: from TrrPePlugin init.js' );
 
   //----------------------------------------------------------------------------
   plugin.init = function( callback ) {
     //--------------------------------------------------------------------------
-    console.log( "  ..*1a: init.js: plugin.init() *" );
+    console.log( "  ..*3: init.js: plugin.init() *" );
     // $:
     if (typeof jQuery !== 'undefined') {
       // jQuery is loaded
@@ -52,7 +52,7 @@ var TrrPePlugin = ( function( $, plugin ) {
     plugin.globals.target_page_references = $( target_page_class_ref );
     plugin.globals.plugin_references = $( plugin_class_ref );
 
-    plugin.statusLog( "  ..*1a: init.js: plugin.init(): host domain '" +
+    plugin.statusLog( "  ..*3a: init.js: plugin.init(): host domain '" +
                       plugin.globals.window_location_origin + "' " +
                       "  fixups_target_page_class_ref '" + target_page_class_ref +
                       "'. References to target_page_id = " + plugin.globals.target_page_references.length +
@@ -61,7 +61,7 @@ var TrrPePlugin = ( function( $, plugin ) {
 
     if ( plugin.globals.target_page_references.length == 0 ||
          plugin.globals.plugin_references.length == 0 ) {
-      plugin.statusLog( "  ..*1a: init.js: plugin.init(): Plugin not enabled for this page. WP page class or plugin references NOT FOUND. Nothing to do.'*");
+      plugin.statusLog( "  ..*3a.2: init.js: plugin.init(): Plugin not enabled for this page. WP page class or plugin references NOT FOUND. Nothing to do.'*");
       plugin.globals.status.enabled = false;
       if ( typeof callback == 'function' ) { callback( null ); return; }
       return null;
@@ -76,11 +76,11 @@ var TrrPePlugin = ( function( $, plugin ) {
     var effect_class_ref = plugin.globals.photo_effect_class_ref + plugin.globals.dots_effect.photo_effect_class_ref;
     plugin.globals.dots_effect.photos = $( effect_class_ref );
     if ( plugin.globals.dots_effect.photos.length == 0 ) {
-      plugin.statusLog( "  ..*1a: init.js: plugin.init(): dots photo effect not enabled for this page. " + effect_class_ref + " references NOT FOUND. Nothing to do.'*");
+      plugin.statusLog( "  ..*3a.3: init.js: plugin.init(): dots photo effect not enabled for this page. " + effect_class_ref + " references NOT FOUND. Nothing to do.'*");
       plugin.globals.dots_effect.enabled = false;
     } else {
       plugin.globals.dots_effect.enabled = true;
-      plugin.statusLog( "  ..*1a: init.js: plugin.init(): dots photo effect enabled for this page. effect class ref '" + effect_class_ref +
+      plugin.statusLog( "  ..*3a.4: init.js: plugin.init(): dots photo effect enabled for this page. effect class ref '" + effect_class_ref +
                          "'. References to dots photo effect = " + plugin.globals.dots_effect.photos.length +
                          " *");
     }
@@ -100,7 +100,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.attachToProfiles = function( callback ) {
     //----------------------------------------------------------------------------
-    console.log( "  ..*1a: init.js: plugin.attachToProfiles() For " + plugin.globals.photos.length + " photos.*" );
+    console.log( "  ..*3b: init.js: plugin.attachToProfiles() For " + plugin.globals.photos.length + " photos.*" );
 
     var last_photo = plugin.globals.photos.length - 1;
     $.each( plugin.globals.photos, function( index, el ) {
@@ -117,74 +117,21 @@ var TrrPePlugin = ( function( $, plugin ) {
          .data( 'previousProfileTag', ( index == 0 ? undefined : plugin.globals.photoTags[ index - 1 ] ) )
          .data( 'nextProfile', ( index == last_photo ? undefined : plugin.globals.photos[ index + 1 ] ) )
          .data( 'nextProfileTag', ( index == last_photo ? undefined : plugin.globals.photoTags[ index + 1 ] ) );
-      plugin.statusLog( "  ..*1a.2: init.js: plugin.attachToProfiles() id: '" + $el.data( 'domIdAttr' ) +
+      plugin.statusLog( "  ..*3b.2: init.js: plugin.attachToProfiles() id: '" + $el.data( 'domIdAttr' ) +
                         "'. PhotoTag: '" + photoTag +
                         "'. previousProfileTag: '" + ($el.data( 'previousProfile' ) ? plugin.globals.photoTags[ index - 1 ] : '*none*') +
                         "'. nextProfileTag: '" + ($el.data( 'nextProfile' ) ? plugin.globals.photoTags[ index + 1 ] : '*none*') +
                         "'. *" );
       plugin.add_scroll_event( index, $el, photoTag,
-      /*1a-Resume here when done*/ function() {
+      /*3a-Resume here when done*/ function() {
       if ( index == last_photo ) {
-        plugin.statusLog( "  ..*1a.3: init.js: plugin.attachToProfiles() END *" );
+        plugin.statusLog( "  ..*3b.3: init.js: plugin.attachToProfiles() END *" );
         if ( typeof callback == 'function' ) { callback( null ); return; }
         return null;
       }
-      /*1a-*/});
+      /*3a-*/});
     }); // end of $.each(photos)
-
-    if ( typeof callback == 'function' ) { callback( null ); return; }
-    return null;
   }; // end: attachToProfiles()
 
   return plugin;
 } ( jQuery, TrrPePlugin || {} ) );
-
-
-/*
-function add_scroll_event( options ) {
-  plugin.statusLog( "  ..*4m: add_scroll_event() for photoTag: " + options.photoTag + ".*" );
-
-  // Add scrollMagic hook for this photo.
-  // create a scene
-  // trigger position:
-  //   default: element CROSSES THE MIDDLE of the viewport
-  //   onEnter: element CROSSES THE BOTTOM of the viewport - either scroll up or down.
-  //   onLeave: element
-  //
-  new ScrollMagic.Scene({
-      // trigger point is the bio Title line.
-      // triggerElement: '.bio-container-for-' + $(el).attr( 'id')
-      //+ ' .info' + ' .title', // point of execution
-      triggerElement: options.triggerElement_selector, // point of execution
-      triggerHook: 'onEnter', // on enter from the bottom.
-      offset: options.triggerElement_offset_y
-  })
-  .on('start', function (event) {
-      // event.scrollDirection:
-      //    PAUSED:
-      // event.state:
-      //    DURING  - scroll down
-      //    BEFORE  - scroll up
-      console.log( 'event: ' + event.scrollDirection + ': ' + event.state );
-      // showing laura. scroll down to gary. Scroll event is for gary (me), laura is previous.
-      var $scrolledToProfile = $(event.currentTarget);
-      if ( event.state == 'DURING' ) {
-        // 'moving_up_into_view'
-        disappear( $scrolledToProfile.$previousProfile );
-        appear( $scrolledToProfile );
-      } else { // event.state == 'BEFORE' which means 'moving_down_out_of_view'
-        disappear( $scrolledToProfile );
-        appear( $scrolledToProfile.$previousProfile );
-      }
-  })
-  .addTo(plugin.globals.scrollMagic_controller); // assign the scene to the controller
-};
-
-function appear( $profile ) {
-  $profile.collapseTimeline.reverse();
-};
-
-function disappear( $profile ) {
-  $profile.collapseTimeline.play();
-};
-*/

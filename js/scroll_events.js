@@ -58,6 +58,9 @@ var TrrPePlugin = ( function( $, plugin ) {
         }
     })
     .addTo( plugin.globals.scrollMagic_controller ); // assign the scene to the controller
+
+    if ( typeof callback == 'function' ) { callback( null ); return; }
+    return null;
   };// end: add_scroll_event()
 
   //----------------------------------------------------------------------------
