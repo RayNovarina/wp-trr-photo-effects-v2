@@ -13,6 +13,7 @@ var TrrPePlugin = ( function( $, plugin ) {
     $el.data( 'sceneContainer',
       $( '<div/>' )
         .attr( 'id', 'trr_scene_Container_' + $el.data( 'photoTag' ) )
+        .css( 'display', 'none' )
         .css( 'width', 'inherit' )
         .css( 'height', 'inherit' )
         .css( 'padding', '0' )

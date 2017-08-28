@@ -7,13 +7,13 @@ var TrrPePlugin = ( function( $, plugin ) {
   plugin.generateAnimationElements = function( callback ) {
     //--------------------------------------------------------------------------
     plugin.globals.nextParticleMethod = 'nextParticleFromHashArray';
-    plugin.globals.isRenderElementsImage = true;
+    plugin.globals.isRenderElementsImage = false;
     plugin.globals.isRandomizeCollapsedCore = true;
     plugin.globals.tweenDuration = 2;
     plugin.globals.isCreateElementsObjArray = false;
     plugin.globals.animationContainerBackgroundColor = '#E7F1F7'; // Climate Corp "halftone background blue"
-    plugin.globals.animationContainerOffsetX = '50%';
-    plugin.globals.animationContainerOffsetY = '5%';
+    plugin.globals.animationContainerOffsetX = '51%';
+    plugin.globals.animationContainerOffsetY = '2%';
     plugin.globals.animationElementsType = 'SvgCircle';
     plugin.globals.animationElementColor = '#0099cc';
     plugin.globals.collapsedCoreX = 100;
@@ -38,11 +38,13 @@ var TrrPePlugin = ( function( $, plugin ) {
       $el.data( 'particlesInfo', particlesInfo );
       // NOTE: for each photo a <svg> container enclosing an array of SVG <circle> elements.
       plugin.createSvgElementsFromParticles( $el,
-      /*1b-Resume here when done*/ function( results ) {
+      /*1b-Resume here when done*/ function() {
       // New <svg>[<circle>]</svg> has been appended to the sceneContainer.
       // We now have a GSAP timeline to attach to a scroll event.
       plugin.add_scroll_event( $el,
       /*1c-Resume here when done*/ function() {
+      // Release memory?
+      particlesInfo.particles.obj = [];
       if ( index == last_photo ) {
         plugin.statusLog( "  ..*5.1b: elements.js: plugin.generateAnimationElements() END *" );
         if ( typeof callback == 'function' ) { callback( null ); return; }
@@ -81,8 +83,8 @@ var TrrPePlugin = ( function( $, plugin ) {
         domElementsObjsArray = [];
     // NOTE: particlesInfo == undefined if file not found.
     if ( !particlesInfo ) {
-      if ( typeof callback == 'function' ) { callback( null ); return; }
-      return null;
+      if ( typeof callback == 'function' ) { callback(); return; }
+      return;
     }
     plugin.statusLog( " ..*5.2: elements.js: createSvgElementsFromParticleMap() Particles source: '" + particlesInfo.source +
                  "'. numParticles = '" + particlesInfo.numParticles +
@@ -125,24 +127,21 @@ var TrrPePlugin = ( function( $, plugin ) {
             } );
 
     // Create element (svg <circle> in the particle's "expanded/home position".
-    var results = null; // { element: circle, coreX: coreXY.coreX, coreY: coreXY.coreY };
-    while ( (results = plugin.createCollapsedPositionSVGelement( $el )) ) {
-      $elementsContainer.append( results.element );
+    var element = null; // element = <circle>
+    while ( (element = plugin.createCollapsedPositionSVGelement( $el )) ) {
+      $elementsContainer.append( element );
       if ( plugin.globals.isCreateElementsObjArray ) {
-        domElementsObjsArray.push( results.element );
+        domElementsObjsArray.push( element );
       }
 
-      // Create timeline of tweens that "collapse" the halftone image to a shrunken
-      // core.
       collapseTimeline.insert(
         TweenMax.to(
-          results.element, plugin.globals.tweenDuration,
-          // NOTE: we don't want to do math calculations when creating DOM elements.
-          //       So require that all adjustments were made when the particle
-          //       map was created.
+          element, plugin.globals.tweenDuration,
           // At this point the <circle> has a cx/cy of the particle's image 'home' position.
-          { attr: { cx: results.coreX,
-                    cy: results.coreY,
+          // Create timeline of tweens that "collapse" the halftone image to a shrunken
+          // core.
+          { attr: { cx: plugin.calcCoreX(),
+                    cy: plugin.calcCoreY(),
                   },
             autoAlpha: 0,
             ease: Power0.easeInOut, // will cause fade-out
@@ -150,60 +149,53 @@ var TrrPePlugin = ( function( $, plugin ) {
         ) // end TweenMax.to()
       ); // end collapseTimeline.insert()
       numElements += 1;
-    }; // end while ( results )
+    }; // end while ( element )
     // Resume here when all elements created.
     $el.data( 'numElements', numElements );
     $el.data( '$elementsContainer', $elementsContainer );
     $el.data( 'collapseTimeline', collapseTimeline );
-    var results = {
-      animationElementsContainerElem: $elementsContainer,
-      domElementsObjsArray: domElementsObjsArray,
-      timelineProps: {
-        sceneTag: $el.data( 'photoTag' ),
-        gsapTimeline: collapseTimeline,
-        isReversed: false,
-      },
-    };
+
     plugin.statusLog( " ..*5.2a: elements.js: createSvgElementsFromParticleMap(): Made " + $el.data( 'numElements' ) +
                  " " + plugin.globals.animationElementsType + " AnimationElements. *");
 
-    if ( typeof callback == 'function' ) { callback( results ); return; }
-    return results;
+    if ( typeof callback == 'function' ) { callback(); return; }
+    return;
   }; // end createSvgElementsFromParticles()
 
   //----------------------------------------------------------------------------
   plugin.createCollapsedPositionSVGelement = function( $el ) {
     //----------------------------------------------------------------------------
-    var results = null,
-        particle = null;
+    var particle = null;
     if ( (particle = plugin.getNextParticle( $el )) ) {
       // Create elements to start at their 'home position' which will recreate the
       // photo image.
-      var circle = $( plugin.makeSvgElementNS( 'circle' ) )
+      return $( plugin.makeSvgElementNS( 'circle' ) )
           .attr( 'cx', particle.props.x )
           .attr( 'cy', particle.props.y )
           .attr( 'r', particle.props.r )
           .attr( 'fill', plugin.globals.animationElementColor );
-      var coreXY = plugin.calcCoreXY( $el, particle );
-      results = { element: circle, coreX: coreXY.coreX, coreY: coreXY.coreY };
     }
-    return results;
+    return null;
   }; // end createCollapsedPositionSVGelement()
 
   //----------------------------------------------------------------------------
-  plugin.calcCoreXY = function( $el, particle ) {
+  plugin.calcCoreX = function() {
     //----------------------------------------------------------------------------
-    var coreX = plugin.globals.collapsedCoreX,
-        coreY = plugin.globals.collapsedCoreY;
     if ( plugin.globals.isRandomizeCollapsedCore ) {
-      coreX = plugin.getRandom( plugin.globals.animationPanelLeftBoundaryX, plugin.globals.animationPanelRightBoundaryX );
-      coreY = plugin.getRandom( plugin.globals.animationPanelTopBoundary, plugin.globals.animationPanelBottom );
+      return plugin.getRandom( plugin.globals.animationPanelLeftBoundaryX, plugin.globals.animationPanelRightBoundaryX );
     }
-    return {
-      coreX: coreX,
-      coreY: coreY
-    };
-  }; // end calcCoreXY()
+    return plugin.globals.collapsedCoreX;
+  }; // end calcCoreX()
+
+  //----------------------------------------------------------------------------
+  plugin.calcCoreY = function() {
+    //----------------------------------------------------------------------------
+    if ( plugin.globals.isRandomizeCollapsedCore ) {
+      return plugin.getRandom( plugin.globals.animationPanelTopBoundary, plugin.globals.animationPanelBottom );
+    }
+    return plugin.globals.collapsedCoreY;
+  }; // end calcCoreY()
+
   //------------------------------------------------------------------------------
   plugin.makeSvgElementNS = function( tag ) {
     //----------------------------------------------------------------------------
@@ -214,17 +206,15 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.setAnimationBoundaries = function( $el ) {
     //----------------------------------------------------------------------------
-    // NOTE: options.sceneTag = scene id.
-    var $sceneContainer = $el.data( '$sceneContainer' ),
-        panel_bottom = $sceneContainer.height(),
-        panel_width = $sceneContainer.width();
+    var panel_bottom = plugin.globals.$animationContainer.height(),
+        panel_width = plugin.globals.$animationContainer.width();
     // Set boundaries for "collapsed" view.
     plugin.globals.animationPanelTop = 0;
     plugin.globals.animationPanelTopBoundary = Math.round( panel_bottom * .45 );
     plugin.globals.animationPanelBottom = panel_bottom;
     plugin.globals.animationPanelWidth = panel_width;
-    plugin.globals.animationPanelLeftBoundaryX = Math.round( panel_width * .45 );
-    plugin.globals.animationPanelRightBoundaryX = Math.round( panel_width - plugin.globals.animationPanelLeftBoundaryX );
+    plugin.globals.animationPanelLeftBoundaryX = Math.round( (panel_width / 2) * .55 );
+    plugin.globals.animationPanelRightBoundaryX = Math.round( (panel_width / 2) - plugin.globals.animationPanelLeftBoundaryX );
   }; // end setAnimationBoundaries()
 
   return plugin;
