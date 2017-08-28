@@ -147,6 +147,13 @@ for(var i=0, j=particles.length;i<j;i++){
 boneyard snippets:
 =================================
 
+<!-- -->
+<div style="display: none;"><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/gsap/src/minified/TweenMax.min.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/gsap/src/minified/TimelineMax.min.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/ScrollMagic/src/minified/ScrollMagic.min.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/globals.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/init.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/page_fixups.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/lib.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/elements.js"></script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/scroll_events.js"></script>
+<script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/images/laura_particles.js">
+</script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/main.js"></script></div>
+
+
+===============================================
 
   //----------------------------------------------------------------------------
   plugin.addScrollEvents = function( callback ) {

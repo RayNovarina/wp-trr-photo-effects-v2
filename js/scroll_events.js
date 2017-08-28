@@ -4,16 +4,16 @@ var TrrPePlugin = ( function( $, plugin ) {
   console.log( "  ..*1a: scroll_events.js: loaded. *" );
 
   //----------------------------------------------------------------------------
-  plugin.add_scroll_event = function( index, $el, photoTag, callback ) {
+  plugin.add_scroll_event = function( $el, callback ) {
     //--------------------------------------------------------------------------
-    plugin.statusLog( "  ..*1a: scroll_events.js add_scroll_event() for photo: '" + photoTag + ":" + $el.attr( 'id' ) + "'. *" );
+    plugin.statusLog( "  ..*1a: scroll_events.js add_scroll_event() for photo: '" + $el.data( 'photoTag' ) + ":" + $el.attr( 'id' ) + "'. *" );
     var img_position = $el.position(),
         img_height = $el.height(),
         triggerElement_offset_y = img_height * 2,
         triggerElement_selector = "#" + $el.attr( 'id' );
 
-    plugin.statusLog( "  ..*1a: scroll_events.js add_scroll_event() photo_idx: " + index +
-                      " photo.position.top: '" + img_position.top + "' photo.height: '" + img_height +
+    plugin.statusLog( "  ..*1a: scroll_events.js add_scroll_event() photo.position.top: '" + img_position.top +
+                      "' photo.height: '" + img_height +
                       "'.  triggerElement_selector: '" + triggerElement_selector +
                       "'.  triggerElement_offset_y: '" + triggerElement_offset_y + "'. *" );
 
@@ -38,8 +38,7 @@ var TrrPePlugin = ( function( $, plugin ) {
         // event.state:
         //    DURING  - scroll down
         //    BEFORE  - scroll up
-        var scrolledToProfile = event.currentTarget.triggerElement(), // i.e. the <img> tag.
-            $scrolledToProfile = $( scrolledToProfile );
+        var $scrolledToProfile = $( event.currentTarget.triggerElement() ); // i.e. the <img> tag.
         plugin.statusLog( "  ..*7: scroll_events.js ScrollMagic event: '" +
                           event.scrollDirection + ": " + event.state +
                           "'. toPhotoTag: '" + $scrolledToProfile.data( 'photoTag' ) +
@@ -50,11 +49,11 @@ var TrrPePlugin = ( function( $, plugin ) {
         // showing laura. scroll down to gary. Scroll event is for gary (me), laura is previous.
         if ( event.state == 'DURING' ) {
           // 'moving_up_into_view'
-          disappear( $scrolledToProfile.data( 'previousProfile' ) );
-          appear( scrolledToProfile );
+          disappear( $scrolledToProfile.data( '$previousProfile' ) );
+          appear( $scrolledToProfile );
         } else { // event.state == 'BEFORE' which means 'moving_down_out_of_view'
-          disappear( scrolledToProfile );
-          appear( $scrolledToProfile.data( 'previousProfile' ) );
+          disappear( $scrolledToProfile );
+          appear( $scrolledToProfile.data( '$previousProfile' ) );
         }
     })
     .addTo( plugin.globals.scrollMagic_controller ); // assign the scene to the controller
@@ -64,31 +63,40 @@ var TrrPePlugin = ( function( $, plugin ) {
   };// end: add_scroll_event()
 
   //----------------------------------------------------------------------------
-  function appear( profile ) {
+  function appear( $profile ) {
     //--------------------------------------------------------------------------
-    if ( !profile ||
-         !$(profile).data( 'collapseTimeline' ) ) {
+    if ( !$profile || !$profile.data ||
+         !$profile.data( 'collapseTimeline' ) ) {
       plugin.statusLog( "  ..*8a: scroll_events.js appear() no profile or profile.collapseTimeline. IGNORED *");
       return;
     }
-    plugin.statusLog( "  ..*8a.1: scroll_events.js appear() For photoTag: '" + $(profile).data( 'photoTag' ) +
+    plugin.openSceneContainer( $profile );
+    plugin.statusLog( "  ..*8a.1: scroll_events.js appear() For photoTag: '" + $profile.data( 'photoTag' ) +
                       "'. REVERSING profile.collapseTimeline. *");
-    $(profile).data( 'collapseTimeline' ).reverse();
-    $(profile).data( 'collapseTimelineIsReversed', false );
+    $profile.data( 'collapseTimeline' ).reverse();
+    $profile.data( 'collapseTimelineIsReversed', true );
   }; // end: appear()
 
   //----------------------------------------------------------------------------
-  function disappear( profile ) {
+  function disappear( $profile ) {
     //--------------------------------------------------------------------------
-    if ( !profile ||
-         !$(profile).data( 'collapseTimeline' ) ) {
+    if ( !$profile || !$profile.data ||
+         !$profile.data( 'collapseTimeline' ) ) {
       plugin.statusLog( "  ..*8b: scroll_events.js disappear() no profile or profile.collapseTimeline. IGNORED *");
       return;
     }
-    plugin.statusLog( "  ..*8b.1: scroll_events.js disappear() For photoTag: '" + $(profile).data( 'photoTag' ) +
-                      "'. PLAYING profile.collapseTimeline. *");
-    $(profile).data( 'collapseTimeline' ).play();
-    $(profile).data( 'collapseTimelineIsReversed', true );
+    plugin.statusLog( "  ..*8b.1: scroll_events.js disappear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW expanded. Start collapsing it. *" );
+
+    $profile.data( 'collapseTimeline' ).play();
+    $profile.data( 'collapseTimelineIsReversed', false );
+
+    var delayMsToWaitForCollapsedState = 1500;
+    plugin.statusLog( " ..*8b.2: scroll_events.js disappear() Waiting '" + delayMsToWaitForCollapsedState + "'ms for Halftone image for '" + $profile.data( 'photoTag' ) + "' to collapse. *" );
+    setTimeout(function() {
+    /*1a-Resume here when WaitForCollapsedState Timeout done*/
+    plugin.statusLog( " ..*8b.3: scroll_events.js disappear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW collapsed. *" );
+    plugin.closeSceneContainer( $profile );
+  }, delayMsToWaitForCollapsedState); // end /*1a-timeout*/
   }; // end: disappear()
 
   return plugin;

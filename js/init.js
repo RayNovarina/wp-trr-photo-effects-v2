@@ -7,7 +7,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.init = function( callback ) {
     //--------------------------------------------------------------------------
-    console.log( "  ..*3: init.js: plugin.init() *" );
+    plugin.statusLog( "  ..*3: init.js: plugin.init() *" );
     // $:
     if (typeof jQuery !== 'undefined') {
       // jQuery is loaded
@@ -18,7 +18,7 @@ var TrrPePlugin = ( function( $, plugin ) {
 
     // ScrollMagic:
     if (typeof ScrollMagic !== 'undefined') {
-      console.log( "ScrollMagic v%s loaded", ScrollMagic.version );
+      plugin.statusLog( "ScrollMagic v%s loaded", ScrollMagic.version );
       plugin.globals.scrollMagic_controller = new ScrollMagic.Controller();
     } //else {
     //  console.debug("ScrollMagic NOT loaded");
@@ -26,14 +26,14 @@ var TrrPePlugin = ( function( $, plugin ) {
 
     // TweenMax:
     if (typeof TweenMax !== 'undefined') {
-      console.log( "TweenMax v%s loaded", TweenMax.version );
+      plugin.statusLog( "TweenMax v%s loaded", TweenMax.version );
     } //else {
     //  console.debug("TweenMax NOT loaded");
     //}
 
     // ScrollToPlugin:
     //if (typeof ScrollToPlugin !== 'undefined') {
-    //  console.log("ScrollToPlugin v%s loaded", ScrollToPlugin.version);
+    //  plugin.statusLog("ScrollToPlugin v%s loaded", ScrollToPlugin.version);
     //} //else {
     //  console.debug("ScrollToPlugin NOT loaded");
     //}
@@ -100,7 +100,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.attachToProfiles = function( callback ) {
     //----------------------------------------------------------------------------
-    console.log( "  ..*3b: init.js: plugin.attachToProfiles() For " + plugin.globals.photos.length + " photos.*" );
+    plugin.statusLog( "  ..*3b: init.js: plugin.attachToProfiles() For " + plugin.globals.photos.length + " photos.*" );
 
     var last_photo = plugin.globals.photos.length - 1;
     $.each( plugin.globals.photos, function( index, el ) {
@@ -117,19 +117,18 @@ var TrrPePlugin = ( function( $, plugin ) {
          .data( 'previousProfileTag', ( index == 0 ? undefined : plugin.globals.photoTags[ index - 1 ] ) )
          .data( 'nextProfile', ( index == last_photo ? undefined : plugin.globals.photos[ index + 1 ] ) )
          .data( 'nextProfileTag', ( index == last_photo ? undefined : plugin.globals.photoTags[ index + 1 ] ) );
+      $el.data( '$previousProfile', $( $el.data( 'previousProfile' ) ) );
+      $el.data( '$nextProfile', $( $el.data( 'nextProfile' ) ) );
       plugin.statusLog( "  ..*3b.2: init.js: plugin.attachToProfiles() id: '" + $el.data( 'domIdAttr' ) +
                         "'. PhotoTag: '" + photoTag +
                         "'. previousProfileTag: '" + ($el.data( 'previousProfile' ) ? plugin.globals.photoTags[ index - 1 ] : '*none*') +
                         "'. nextProfileTag: '" + ($el.data( 'nextProfile' ) ? plugin.globals.photoTags[ index + 1 ] : '*none*') +
                         "'. *" );
-      plugin.add_scroll_event( index, $el, photoTag,
-      /*3a-Resume here when done*/ function() {
       if ( index == last_photo ) {
         plugin.statusLog( "  ..*3b.3: init.js: plugin.attachToProfiles() END *" );
         if ( typeof callback == 'function' ) { callback( null ); return; }
         return null;
       }
-      /*3a-*/});
     }); // end of $.each(photos)
   }; // end: attachToProfiles()
 
