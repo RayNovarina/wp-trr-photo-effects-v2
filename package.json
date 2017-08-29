@@ -1,0 +1,32 @@
+{
+  "name": "wp-trr-photo-effects-v2",
+  "version": "2.0.0",
+  "description": "online repository for trr-photo-effects",
+  "dependencies": {
+    "harp": "*"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.1",
+    "gulp-debug": "^3.1.0",
+    "gulp-load-plugins": "^1.5.0",
+    "gulp-minify": "^1.0.0",
+    "gulp-minify-html": "^1.0.6",
+    "gulp-uglify": "^3.0.0",
+    "gulp-util": "^3.0.8"
+  },
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RayNovarina/wp-trr-photo-effects-v2.git"
+  },
+  "author": "ray",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RayNovarina/wp-trr-photo-effects-v2/issues"
+  },
+  "homepage": "https://github.com/RayNovarina/wp-trr-photo-effects-v2#readme"
+}
