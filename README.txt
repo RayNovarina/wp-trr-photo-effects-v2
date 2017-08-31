@@ -144,6 +144,21 @@ for(var i=0, j=particles.length;i<j;i++){
 }
 
 =================================
+NOTES:
+=================================
+* Add to each photo attribs:
+  - ImageOffsetX and Y.
+  Not all base photos are "centered".
+  Use to "center" home position, i.e. expanded image.
+* Add to Each particles file:
+  - ImageOffsetX and Y.
+  Use to "center" the collapsed cores of the collapsing and expanding images.
+  Apply to animation boundaries when
+  calculating RandomizeCollapsedCore
+  values.
+
+
+=================================
 boneyard snippets:
 =================================
 
@@ -154,7 +169,221 @@ boneyard snippets:
 
 
 ===============================================
+// Private methods in context of plugIn instance, i.e. this
+// // NOTE: Private methods MUST use _this to get 'this' for this instance of TrrPlugin
 
+//----------------------------------------------------------------------------
+function scrollTo( _this, options, callback ) {
+  //----------------------------------------------------------------------------
+  var $scrolledToElem = ( options.toPhotoTag ? null : $( options.event.currentTarget ) ),
+      toPhotoTag = options.toPhotoTag || $scrolledToElem.attr( 'photoTag' ),
+      $toPhotoImg = $( '#' + 'newPhoto' + toPhotoTag.charAt( 0 ).toUpperCase() + toPhotoTag.slice(1).toLowerCase() ),
+      fromPhotoTag = _this.activeStory.tag;
+  //alert( "Clicked on ScrollTo '" + $scrolledToElem.attr( 'photoTag' ) + ".  Active halftone profile: '" + _this.activeStory.tag + "'. *" );
+  console.log( " ..*4.5) scrollTo() Scroll To: '" + toPhotoTag + ".  Scroll From: '" + fromPhotoTag + "'. *" );
+
+  var fromStory = _this.activeStory;
+  if ( !fromStory.timelines ||
+       !fromStory.timelines.main ) {
+    alert( "Scroll From: '" + fromPhotoTag + "'. A story has not been created for this photo yet! You MUST create animationElements first via the 'Particles, Elements' links." );
+    if ( typeof callback == 'function' ) { callback( toPhotoTag ); return; }
+    return toPhotoTag;
+  }
+
+  photoTagToStory( _this, toPhotoTag,
+  /*1-Resume here when done*/ function( results ) {
+  if ( !results.isFound ||
+       !results.item.timelines ||
+       !results.item.timelines.main ) {
+    alert( "Scroll To: '" + toPhotoTag + "'. A story has not been created for this photo yet! You MUST create animationElements first via the 'Particles, Elements' links." );
+    if ( typeof callback == 'function' ) { callback( toPhotoTag ); return; }
+    return toPhotoTag;
+  }
+  var toStory = results.item;
+
+  //----------------------------------------------------------------------------
+  // 1) Make sure selected photo animation Stage shows an expanded image.
+  //    Then start its collapse.
+  //----------------------------------------------------------------------------
+  var story = fromStory;
+  // NOTE: after elements are built they form an expanded image.
+  var delayMsToWaitForStartState = 0;
+  console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' is CURRENTLY '" + (story.timelines.main.isReversed ? 'expanded' : 'collapsed' ) + "'. *" );
+  // Note: collapse.isReversed means "image is expanded"
+  if ( !story.timelines.main.isReversed ) {
+    delayMsToWaitForStartState = 2000;
+    console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' IS NOW collapsed. Start expanding it. *" );
+    story.timelines.main.gsapTimeline.reverse();
+    story.timelines.main.isReversed = true;
+  }
+  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForStartState + "'ms for From Story Halftone image for '" + fromPhotoTag + "' to expand. *" );
+  setTimeout(function() {
+  /*1a-Resume here when WaitForStartState Timeout done*/
+  console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' IS NOW expanded. Start collapsing it. *" );
+  story.timelines.main.gsapTimeline.play();
+  story.timelines.main.isReversed = false;
+  var delayMsToWaitForCollapsedState = 2000;
+  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForCollapsedState + "'ms for From Story Halftone image for '" + fromPhotoTag + "' to collapse. *" );
+  setTimeout(function() {
+  /*1b-Resume here when WaitForCollapsedState Timeout done*/
+  console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' IS NOW collapsed. " +
+               "Select, display photo we are scrolling to ('" + toPhotoTag + "'). *" );
+
+  //----------------------------------------------------------------------------
+  // 2) Select, display photo we are scrolling to.
+  //    Make sure selected photo animation Stage shows a collapsed image.
+  //    Then start its expansion.
+  //----------------------------------------------------------------------------
+  // Select, display photo we are scrolling to. NOTE: set new _this.activeStory.
+  newPhoto( _this, { photoTag: toPhotoTag, photoType: $toPhotoImg.attr('photoType'), imgSrc: $toPhotoImg.attr('data-src') },
+  /*1c-Resume here when newPhoto(toPhotoTag) done*/ function( image ) {
+  story = toStory;
+  console.log( " ..*4.5) scrollTo() To Story: Photo for '" + toPhotoTag + "' IS NOW being displayed as a '" +
+               (story.timelines.main.isReversed ? 'expanded' : 'collapsed' ) + "' Halftone image. *" );
+
+  delayMsToWaitForCollapsedState = 0;
+  if ( story.timelines.main.isReversed ) {
+    delayMsToWaitForCollapsedState = 2000;
+    console.log( " ..*4.5) scrollTo() To Story: Halftone image for '" + toPhotoTag + "' is now expanded. Start collapsing it. *" );
+    story.timelines.main.gsapTimeline.play();
+    story.timelines.main.isReversed = false;
+  }
+  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForCollapsedState + "'ms for To Story Halftone image for '" + fromPhotoTag + "' to collapse. *" );
+  setTimeout(function() {
+  /*1d-Resume here when WaitForCollapsedState Timeout done*/
+  console.log( " ..*4.5) scrollTo() To Story: Halftone image for '" + toPhotoTag + "' IS NOW collapsed. Start expanding it. *" );
+  story.timelines.main.gsapTimeline.reverse();
+  story.timelines.main.isReversed = true;
+  delayMsToWaitForExpandedState = 2000;
+  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForExpandedState + "'ms for To Story Halftone image for '" + fromPhotoTag + "' to expand. *" );
+  setTimeout(function() {
+  /*1e-Resume here when WaitForExpandedState Timeout done*/
+  console.log( " ..*4.5) scrollTo() To Story: Halftone image for '" + toPhotoTag + "' IS NOW expanded. *" );
+  // To Story:
+  }, delayMsToWaitForExpandedState); // end /*1e-timeout*/
+  }, delayMsToWaitForCollapsedState); // end /*1d-timeout*/
+
+  // From Story:
+  /*1c-*/}); }, delayMsToWaitForCollapsedState); // end /*1b-timeout*/
+  }, delayMsToWaitForStartState); // end /*1a-timeout*/
+  if ( typeof callback == 'function' ) { callback( toPhotoTag ); return; }
+  return toPhotoTag;
+  /*1-*/});
+}; // end: scrollTo()
+
+======================================
+
+//----------------------------------------------------------------------------
+function calcCoreXY( _this, options, particle ) {
+  //----------------------------------------------------------------------------
+  var coreX = _this.settings.createAnimationElementsParams.collapsedCoreX,
+      coreY = _this.settings.createAnimationElementsParams.collapsedCoreY;
+  if ( _this.settings.createAnimationElementsParams.isRandomizeCollapsedCore ) {
+    coreX = getRandom( _this.settings.animationPanelLeftBoundaryX, _this.settings.animationPanelRightBoundaryX );
+    coreY = getRandom( _this.settings.animationPanelTopBoundary, _this.settings.animationPanelBottom );
+  }
+  return {
+    coreX: coreX,
+    coreY: coreY
+  };
+}; // end calcCoreXY()
+
+===============================
+// Private methods in context of plugIn instance, i.e. this
+// // NOTE: Private methods MUST use _this to get 'this' for this instance of TrrPlugin
+
+//----------------------------------------------------------------------------
+function playSelectedStory( _this, options, /*Code to resume when done*/ callback ) {
+  //--------------------------------------------------------------------------
+  console.log( " ..*4.2) playSelectedStory() for activeStory: '" + _this.activeStory.tag + "' *");
+
+  // Hide the active/visible sceneContainer, we will replace it with ours.
+  closeActiveSceneContainer( _this,
+  /*1-Resume here when done*/ function( activeScene ) {
+  tagToScene( _this, 'elements', _this.activeStory,
+  /*2-Resume here when done*/ function( result ) {
+  openSceneContainer( _this, result.item );
+
+  // Play story for active/selectedPhoto. All scenes, i.e. expand and collapse.
+  playStory( _this, _this.activeStory.tag, options,
+  /*3-Resume here when done*/ function( story ) {
+  if ( typeof callback == 'function' ) { callback( story ); return; }
+  return story;
+  /*3-*/});/*2-*/});/*1-*/});
+}; // end: playSelectedStory()
+
+//----------------------------------------------------------------------------
+function playFullStory( _this, photoTag, options, /*Code to resume when done*/ callback ) {
+  //--------------------------------------------------------------------------
+  console.log( " ..*4.2) playFullStory() create ParticleMap, animation elements, play story for '" + photoTag + "'. All scenes, i.e. expand and collapse. *");
+
+  elements( _this, {
+    isOnlyIfNewParticleMap: false,
+    isRenderElementsImage: true,
+    isCreateElementsObjArray: false,
+    tweenDuration: 3,
+    isCreateSceneInCenterPanel: true,
+  },
+  /*1-Resume here when done*/ function( activeScene ) {
+  // Play story for active/selectedPhoto. All scenes, i.e. expand and collapse.
+  playStory( _this, photoTag, options,
+  /*2-Resume here when done*/ function( story ) {
+  if ( typeof callback == 'function' ) { callback( story ); return; }
+  return story;
+  /*1-*/});
+  /*1-*/});
+}; // end: playFullStory()
+
+//----------------------------------------------------------------------------
+function playStory( _this, photoTag, options, /*Code to resume when done*/ callback ) {
+  //--------------------------------------------------------------------------
+  console.log( " ..*4.2) playStory() Play story for '" + photoTag + "'. All scenes, i.e. expand and collapse. *");
+
+  photoTagToStory( _this, photoTag,
+  /*1-Resume here when done*/ function( result ) {
+  if ( !result.isFound ||
+       (!result.item.timelines ||
+        !result.item.timelines.main ) ) {
+    alert( "photoTag: '" + photoTag + "'. A story has not been created for this photo yet! You MUST create animationElements first via the 'Elements' link." );
+    if ( typeof callback == 'function' ) { callback( null ); return; }
+    return null;
+  }
+  // NOTE: after elements are built they form an expanded image.
+  var story = result.item;
+  var delayMsToWaitForStartState = 0;
+  // Note: collapse.isReversed means "image is expanded"
+  if ( !story.timelines.main.isReversed ) {
+    delayMsToWaitForStartState = 2000;
+    story.timelines.main.gsapTimeline.reverse();
+    story.timelines.main.isReversed = true;
+  }
+  // Wait for image to get into start position.
+  setTimeout(function() {
+  /*1a-Resume here when Timeout done*/
+  // Collapse the image.
+  story.timelines.main.gsapTimeline.play();
+  story.timelines.main.isReversed = false;
+  // Wait for collapse to complete.
+  var delayMsToWaitForCollapsedState = 2500;
+  setTimeout(function() {
+  /*1b-Resume here when Timeout done*/
+  // Expand the collapse image back to a full image.
+  story.timelines.main.gsapTimeline.reverse();
+  story.timelines.main.isReversed = true;
+  // Wait for expand to complete.
+  var delayMsToWaitForExpandedState = 1000;
+  setTimeout(function() {
+  /*1c-Resume here when Timeout done*/
+  if ( typeof callback == 'function' ) { callback( story ); return; }
+  return story;
+  }, delayMsToWaitForExpandedState); // end /*1c-timeout*/
+  }, delayMsToWaitForCollapsedState); // end /*1b-timeout*/
+  }, delayMsToWaitForStartState); // end /*1a-timeout*/
+  /*1-*/});
+}; // end: playStory()
+
+
+================================
   //----------------------------------------------------------------------------
   plugin.addScrollEvents = function( callback ) {
     //--------------------------------------------------------------------------
