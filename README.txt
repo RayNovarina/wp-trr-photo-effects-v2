@@ -169,23 +169,304 @@ boneyard snippets:
 
 ==============================================
 
-if ( event.state == 'DURING' ) {
-  // 'moving_up_into_view'
-  // previous/active image disappears, new one appears.
-  plugin[ $scrolledToProfile.data( 'disappearMethod' ) ]( $scrolledToProfile.data( '$previousProfile' ),
-  /*1-Resume here when done*/ function() {
-  plugin[ $scrolledToProfile.data( 'appearMethod' ) ]( $scrolledToProfile,
-  /*1a-Resume here when done*/ function() {
-  return;
-  /*1a-*/});/*1-*/});
-} else { // event.state == 'BEFORE' which means 'moving_down_out_of_view'
-
-===============================
-
 "use strict";
 
 var TrrPePlugin = ( function( $, plugin ) {
-  if(plugin.globals.logging){plugin.statusLog( "  ..*7: scroll_events.js: loaded. *" );}
+  if(plugin.globals.logging){plugin.statusLog( "  ..*5: elements.js: loaded. *" );}
+
+  //----------------------------------------------------------------------------
+  plugin.generateAnimationElements = function( callback ) {
+    //--------------------------------------------------------------------------
+    plugin.globals.nextParticleMethod = 'nextParticleFromHashArray';
+
+    plugin.globals.isShowElementsImage = false;
+    plugin.globals.isStartImageCollapsed = true;
+    plugin.globals.isStartImageExpanded = false;
+    plugin.globals.createPositionedElementMethod = plugin.globals.isStartImageCollapsed
+        ? 'createCollapsedPositionSVGelement' : 'createExpandedPositionSVGelement';
+    plugin.globals.elementTweenMethod = plugin.globals.isStartImageCollapsed
+        ? 'tweenCollapsedPositionSVGelement' : 'tweenExpandedPositionSVGelement';
+    plugin.globals.isElementVisible = false;
+    plugin.globals.isRandomizeCollapsedCore = true;
+    plugin.globals.tweenDuration = 3;
+    plugin.globals.isCreateElementsObjArray = false;
+    plugin.globals.animationContainerBackgroundColor = '#E7F1F7'; // Climate Corp "halftone background blue"
+    plugin.globals.animationContainerOffsetX = '51%';
+
+    plugin.globals.animationContainerOffsetY = '2%';
+    plugin.globals.animationElementsType = 'SvgCircle';
+    plugin.globals.animationElementColor = '#0099cc';
+    plugin.globals.collapsedCoreX = 100;
+    plugin.globals.collapsedCoreY = 100;
+
+    if(plugin.globals.logging){plugin.statusLog( "  ..*5.1: elements.js: plugin.generateAnimationElements() For " + plugin.globals.photos.length + " photos.*" );}
+    // Create and append enclosing <div> to Wordpress theme's <body><div id='content'><article>
+    // Profile text will scroll over our animated photos.
+    plugin.globals.$animationContainer = $( plugin.createAnimationContainer() );
+    var last_photo = plugin.globals.photos.length - 1;
+    $.each( plugin.globals.photos, function( index, el ) {
+      var $el = $(el);
+      if(plugin.globals.logging){plugin.statusLog( "  ..*5.1a: elements.js: plugin.generateAnimationElements() id: '" + $el.data( 'domIdAttr' ) +
+                        "'. PhotoTag: '" + $el.data( 'photoTag' ) + "'. *" );}
+
+      $el.data( 'sceneContainer', plugin.createSceneContainer( $el ) );
+      $el.data( '$sceneContainer', $( $el.data( 'sceneContainer' ) ) );
+      // NOTE: container.style.display = 'none'. Will be enabled during animation.
+      plugin.globals.$animationContainer.append( $el.data( 'sceneContainer' ) );
+      plugin.getParticlesFromDataFile( $el,
+      /*1a-Resume here when done*/ function( particlesInfo ) {
+      $el.data( 'particlesInfo', particlesInfo );
+      // NOTE: for each photo a <svg> container enclosing an array of SVG <circle> elements.
+      plugin.createSvgElementsFromParticles( $el,
+      /*1b-Resume here when done*/ function() {
+      // New <svg>[<circle>]</svg> has been appended to the sceneContainer.
+      // We now have a GSAP timeline to attach to a scroll event.
+      plugin.add_scroll_event( $el,
+      /*1c-Resume here when done*/ function() {
+      // Release memory?
+      particlesInfo.particles.obj = [];
+      if ( index == last_photo ) {
+        if(plugin.globals.logging){plugin.statusLog( "  ..*5.1b: elements.js: plugin.generateAnimationElements() END *" );}
+        if ( typeof callback == 'function' ) { callback( null ); return; }
+        return null;
+      }
+      /*1c-*/});/*1b-*/});/*1a-*/});
+    }); // end of $.each(photos)
+  }; // end: generateAnimationElements()
+
+  //----------------------------------------------------------------------------
+  plugin.createAnimationContainer = function() {
+    //--------------------------------------------------------------------------
+    if(plugin.globals.logging){plugin.statusLog( " ..*5.2: elements.js: plugin.createAnimationContainer() *" );}
+    // We will use the Wordpress theme's <body><div id='content'><article>
+    // Dom element. It is the width of the WP content "body" where the profile
+    // text and photos are. So we make a <div> after '.entry-header' and before
+    // the page's '.entry-content'.
+    return $( '<div/>' )
+        .attr( 'id', 'trr_ani_Container_' )
+        .css( 'width', 'inherit' )
+        .css( 'height', '600' )
+        .css( 'padding', '0' )
+        .css( 'margin', '0' )
+        .css( 'overflow', 'hidden' )
+        .css( 'position', 'fixed' )
+        .css( 'z-index', '-1' )
+        .css( 'top', plugin.globals.animationContainerOffsetY )
+        .css( 'left', plugin.globals.animationContainerOffsetX )
+      .insertBefore( $( '.entry-header' ) );
+  }; // end: createAnimationContainer()
+
+  //----------------------------------------------------------------------------
+  plugin.createSvgElementsFromParticles = function( $el, callback ) {
+    //--------------------------------------------------------------------------
+    var particlesInfo = $el.data( 'particlesInfo' ),
+        domElementsObjsArray = [];
+    // NOTE: particlesInfo == undefined if file not found.
+    if ( !particlesInfo ) {
+      if ( typeof callback == 'function' ) { callback(); return; }
+      return;
+    }
+    if(plugin.globals.logging){plugin.statusLog( " ..*5.3: elements.js: createSvgElementsFromParticleMap() Particles source: '" + particlesInfo.source +
+                 "'. numParticles = '" + particlesInfo.numParticles +
+                 "'. nextParticleMethod: '" + plugin.globals.nextParticleMethod +
+                 "'. ShowElementsImage: '" + plugin.globals.isShowElementsImage +
+                 "'. StartImageCollapsed: '" + plugin.globals.isStartImageCollapsed +
+                 "'. RandomizeCollapsedCore: '" + plugin.globals.isRandomizeCollapsedCore +
+                 "'. timeline.tweenDuration: '" + plugin.globals.tweenDuration +
+                 "'. createPositionedElementMethod: '" + plugin.globals.createPositionedElementMethod +
+                 "'. elementTweenMethod: '" + plugin.globals.elementTweenMethod +
+                 ". *");}
+
+    // Insert the REQUIRED <svg> tag within the sceneContainer to contain the svg <circle> elements.
+    // NOTE: browser can not directly add <svg> or <circle> tags, need to use "w3.org namespace".
+    var $elementsContainer =
+      $( plugin.makeSvgElementNS('svg') )
+        .attr( 'id', 'aniElems_Con_' )
+        .attr( 'width', '600' )
+        .attr( 'height', '600' )
+        .attr( 'trr-ani-elem-type', 'circle' )
+        .addClass( 'trr-ani-elems-container' );
+
+    // Insert into our sceneContainer.
+    $el.data( '$sceneContainer' ).append( $elementsContainer );
+    // Assume activeScene container was made invisible.
+    if ( plugin.globals.isShowElementsImage ) {
+      // make our container visible before we start filling it up.
+      plugin.openSceneContainer( $el );
+    }
+    if ( plugin.globals.isRandomizeCollapsedCore ) {
+      plugin.setAnimationBoundaries( $el );
+    }
+
+    var numElements = 0;
+    var mainTimeline = new TimelineMax(
+            { repeat: 0, yoyo: false, repeatDelay: 0, delay: 0, paused: true, } );
+
+    // Create element (svg <circle> in the particle's "expanded/home position" or
+    // its "collapsed/core position". In any case we will need the coreXY values.
+    var results = null;
+    // results = { element: <circle>, particle: particle,
+    //             homeX: particle.props.x, homeY: particle.props.y,
+    //             coreX: coreX, coreY: coreY, }
+    while ( (results = plugin.createPositionedSVGelement( $el )) ) {
+      $elementsContainer.append( results.element );
+      if ( plugin.globals.isCreateElementsObjArray ) {
+        domElementsObjsArray.push( results.element );
+      }
+      // Create timeline of tweens that either:
+      //    "collapses" the halftone image to a shrunken core.
+      //    or "expands" the halftone image from a shrunken core to a full image.
+      mainTimeline.insert( plugin[ plugin.globals.elementTweenMethod ]( mainTimeline, results ) );
+      numElements += 1;
+    }; // end while ( results )
+
+    // Resume here when all elements created.
+    $el.data( 'numElements', numElements );
+    $el.data( '$elementsContainer', $elementsContainer );
+    $el.data( 'mainTimeline', mainTimeline );
+    $el.data( 'mainTimelineIsReversed', true );
+
+    if(plugin.globals.logging){plugin.statusLog( " ..*5.3a: elements.js: createSvgElementsFromParticleMap(): Made " + $el.data( 'numElements' ) +
+                 " " + plugin.globals.animationElementsType + " AnimationElements. *");}
+
+    if ( typeof callback == 'function' ) { callback(); return; }
+    return;
+  }; // end createSvgElementsFromParticles()
+
+  //----------------------------------------------------------------------------
+  plugin.tweenCollapsedPositionSVGelement = function( timelineMax, results ) {
+    //--------------------------------------------------------------------------
+    // NOTE: particles(xy) image is currently Collapsed,
+    //       we move em to a expanded/home position.
+    // ---------------------------------------------------
+    return TweenMax.to(
+      results.element, plugin.globals.tweenDuration,
+      // At this point the <circle> has a cx/cy of the particle's image
+      // 'collapsed' position.  So we move em to a expanded/home position.
+      { attr: { cx: results.homeX,
+                cy: results.homeY,
+                opacity: 1,
+              },
+              // autoAlpha - the same thing as "opacity" except that when the
+              // value hits "0", the "visibility" property will be set to "hidden",
+              // i.e. fade.
+              //autoAlpha: 0,
+              ease: Power2.easeOut,
+      }
+    ); // end TweenMax.to()
+  }; // end tweenCollapsedPositionSVGelement()
+
+  //----------------------------------------------------------------------------
+  plugin.tweenExpandedPositionSVGelement = function( timelineMax, results ) {
+    //--------------------------------------------------------------------------
+    // NOTE: particles(xy) image is currently EXPANDED,
+    //       move em to a collapsed position.
+    // ---------------------------------------------------
+    return TweenMax.to(
+      results.element, plugin.globals.tweenDuration,
+      // At this point the <circle> has a cx/cy of the particle's image
+      // 'home' position. Create timeline of tweens that "collapse" the
+      // halftone image to a shrunken core.
+      { attr: { cx: results.coreX,
+                cy: results.coreY,
+              },
+        // autoAlpha - the same thing as "opacity" except that when the
+        // value hits "0", the "visibility" property will be set to "hidden",
+        // i.e. fade.
+        autoAlpha: 0,
+        //ease: Power0.easeInOut,
+      },
+    ); // end TweenMax.to()
+  }; // end tweenExpandedPositionSVGelement()
+
+  //----------------------------------------------------------------------------
+  plugin.createPositionedSVGelement = function( $el ) {
+    //--------------------------------------------------------------------------
+    var results = null,
+        particle = null,
+        element = null,
+        coreX = plugin.calcCoreX(),
+        coreY = plugin.calcCoreY();
+    if ( (particle = plugin.getNextParticle( $el )) ) {
+      element = plugin[ plugin.globals.createPositionedElementMethod ]( particle, coreX, coreY );
+    } else {
+      return null;
+    }
+    if ( plugin.globals.isStartImageCollapsed &&
+        !plugin.globals.isElementVisible ) {
+      $( element ).attr( 'opacity', 0 );
+    }
+    return {
+      element: element, particle: particle,
+      homeX: particle.props.x, homeY: particle.props.y,
+      coreX: coreX, coreY: coreY,
+    };
+  }; // end createPositionedSVGelement()
+
+  //----------------------------------------------------------------------------
+  plugin.createCollapsedPositionSVGelement = function( particle, coreX, coreY ) {
+    //--------------------------------------------------------------------------
+    // Create elements to start at their 'home position' which will recreate the
+    // photo image.
+    return $( plugin.makeSvgElementNS( 'circle' ) )
+        .attr( 'cx', coreX )
+        .attr( 'cy', coreY )
+        .attr( 'r', particle.props.r )
+        .attr( 'fill', plugin.globals.animationElementColor );
+  }; // end createCollapsedPositionSVGelement()
+
+  //----------------------------------------------------------------------------
+  plugin.createExpandedPositionSVGelement = function( particle, coreX, coreY ) {
+    //--------------------------------------------------------------------------
+    // Create elements to start at their 'home position' which will recreate the
+    // photo image.
+    return $( plugin.makeSvgElementNS( 'circle' ) )
+              .attr( 'cx', particle.props.x )
+              .attr( 'cy', particle.props.y )
+              .attr( 'r', particle.props.r )
+              .attr( 'fill', plugin.globals.animationElementColor );
+  }; // end createExpandedPositionSVGelement()
+
+  //----------------------------------------------------------------------------
+  plugin.calcCoreX = function() {
+    //--------------------------------------------------------------------------
+    if ( plugin.globals.isRandomizeCollapsedCore ) {
+      return plugin.getRandom( plugin.globals.animationPanelLeftBoundaryX, plugin.globals.animationPanelRightBoundaryX );
+    }
+    return plugin.globals.collapsedCoreX;
+  }; // end calcCoreX()
+
+  //----------------------------------------------------------------------------
+  plugin.calcCoreY = function() {
+    //--------------------------------------------------------------------------
+    if ( plugin.globals.isRandomizeCollapsedCore ) {
+      return plugin.getRandom( plugin.globals.animationPanelTopBoundary, plugin.globals.animationPanelBottomBoundary );
+    }
+    return plugin.globals.collapsedCoreY;
+  }; // end calcCoreY()
+
+  //----------------------------------------------------------------------------
+  plugin.makeSvgElementNS = function( tag ) {
+    //--------------------------------------------------------------------------
+    // per: http://chubao4ever.github.io/tech/2015/07/16/jquerys-append-not-working-with-svg-element.html
+    return document.createElementNS('http://www.w3.org/2000/svg', tag);
+  }; // end makeSvgElementNS()
+
+  //----------------------------------------------------------------------------
+  plugin.setAnimationBoundaries = function( $el ) {
+    //--------------------------------------------------------------------------
+    var $container = plugin.globals.$animationContainer,
+        container_bottom = $container.height(),
+        container_width = $container.width(),
+        container_half_width = container_width / 2;
+    // Set boundaries for "collapsed" view.
+    plugin.globals.animationPanelTop = 0;
+    plugin.globals.animationPanelTopBoundary = Math.round( container_bottom * .25 );
+    plugin.globals.animationPanelBottomBoundary = container_bottom - 80;
+    plugin.globals.animationPanelWidth = container_width;
+    plugin.globals.animationPanelLeftBoundaryX = Math.round( container_half_width * .42 );
+    plugin.globals.animationPanelRightBoundaryX = Math.round( container_half_width - plugin.globals.animationPanelLeftBoundaryX );
+  }; // end setAnimationBoundaries()
 
   //----------------------------------------------------------------------------
   plugin.add_scroll_event = function( $el, callback ) {
@@ -195,14 +476,20 @@ var TrrPePlugin = ( function( $, plugin ) {
         img_height = $el.height(),
         triggerElement_offset_y = img_height * 2,
         triggerElement_selector = "#" + $el.attr( 'id' );
-        $el.data( 'delayMsToWaitForPartialCollapsedState', plugin.globals.tweenDuration * 950 ); // 95% of 2 seconds.
-        $el.data( 'delayMsToWaitForPartialExpandedState', plugin.globals.tweenDuration * 200 ); // 20% of 2 seconds.
+    $el.data( 'delayMsToWaitForPartialCollapsedState', plugin.globals.tweenDuration * 950 ); // 95% of 2 seconds.
+    $el.data( 'delayMsToWaitForPartialExpandedState', plugin.globals.tweenDuration * 200 ); // 20% of 2 seconds.
+    // if startExpanded appearMethod = 'playTimelineBackwards'
+    $el.data( 'appearMethod', plugin.globals.isStartImageExpanded ? 'playTimelineBackwards' : 'playTimelineForwards' );
+    // if startExpanded appearMethod = 'playTimelineForwards'
+    $el.data( 'disappearMethod', plugin.globals.isStartImageExpanded ? 'playTimelineForwards' : 'playTimelineBackwards' );
 
     if(plugin.globals.logging){plugin.statusLog( "  ..*7a.1: scroll_events.js add_scroll_event() photo.position.top: '" + img_position.top +
                       "'.  photo.height: '" + img_height +
                       "'.  triggerElement_selector: '" + triggerElement_selector +
                       "'.  triggerElement_offset_y: '" + triggerElement_offset_y +
-                      "'.  delayMsToWaitForPartialCollapsedState: '" + $el.data( 'delayMsToWaitForPartialCollapsedState' ) +
+                      "'.  elementTweenMethod: '" + plugin.globals.elementTweenMethod +
+                      "'.  appearMethod: '" + $el.data( 'appearMethod' ) +
+                      "'.  disappearMethod: '" + $el.data( 'disappearMethod' ) +
                       "'.  delayMsToWaitForPartialExpandedState: '" + $el.data( 'delayMsToWaitForPartialExpandedState' ) +
                       "'. *" );}
 
@@ -230,350 +517,5 @@ var TrrPePlugin = ( function( $, plugin ) {
     return null;
   };// end: add_scroll_event()
 
-  //----------------------------------------------------------------------------
-  plugin.scrollTo = function( event ) {
-    //--------------------------------------------------------------------------
-    // event.scrollDirection:
-    //    PAUSED:
-    // event.state:
-    //    DURING  - scroll down
-    //    BEFORE  - scroll up
-    var $scrolledToProfile = $( event.currentTarget.triggerElement() ); // i.e. the <img> tag.
-    if(plugin.globals.logging){plugin.statusLog( "  ..*7a.2: scroll_events.js ScrollMagic event: '" +
-                      event.scrollDirection + ": " + event.state +
-                      "'. toPhotoTag: '" + $scrolledToProfile.data( 'photoTag' ) +
-                      "'. previousProfile.photoTag: '" + ($scrolledToProfile.data( 'previousProfileTag' ) || '*none*') +
-                      "'. nextProfileTag: '" + ($scrolledToProfile.data( 'nextProfileTag' ) || '*none*') +
-                      "'. *" );}
-
-    // showing laura. scroll down to gary. Scroll event is for gary (me), laura is previous.
-    if ( event.state == 'DURING' ) {
-      // 'moving_up_into_view'
-      disappear( $scrolledToProfile.data( '$previousProfile' ),
-      /*1-Resume here when done*/ function() {
-      appear( $scrolledToProfile,
-      /*1a-Resume here when done*/ function() {
-      return;
-      /*1a-*/});/*1-*/});
-    } else { // event.state == 'BEFORE' which means 'moving_down_out_of_view'
-      disappear( $scrolledToProfile,
-      /*2-Resume here when done*/ function() {
-      appear( $scrolledToProfile.data( '$previousProfile' ),
-      /*2a-Resume here when done*/ function() {
-      return;
-      /*2a-*/});/*2-*/});
-    }
-  };// end: scrollTo()
-
-  //----------------------------------------------------------------------------
-  function appear( $profile, callback ) {
-    //--------------------------------------------------------------------------
-    if ( !$profile || !$profile.data ||
-         !$profile.data( 'mainTimeline' ) ) {
-      if(plugin.globals.logging){plugin.statusLog( "  ..*7b: scroll_events.js appear() no profile or profile.mainTimeline. IGNORED *");}
-      if ( typeof callback == 'function' ) { callback( null ); return; }
-      return null;
-    }
-
-    if(plugin.globals.logging){plugin.statusLog( "  ..*7b.1: scroll_events.js appear() For photoTag: '" + $profile.data( 'photoTag' ) +
-                      "'. REVERSING profile.mainTimeline. *");}
-    $profile.data( 'mainTimeline' ).reverse();
-    //$profile.data( 'mainTimelineIsReversed', true );
-
-    if(plugin.globals.logging){plugin.statusLog( " ..*7b.2: scroll_events.js appear() Waiting '" + $profile.data( 'delayMsToWaitForPartialExpandedState' ) + "'ms for Halftone image for '" + $profile.data( 'photoTag' ) + "' to PARTIALLY expand. *" );}
-    setTimeout(function() {
-    /*1a-Resume here when WaitForPartialExpandedState Timeout done*/
-    if(plugin.globals.logging){plugin.statusLog( " ..*7b.3: scroll_events.js appear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW PARTIALLY expanded. *" );}
-    //plugin.openSceneContainer( $profile );
-    $profile.data( '$sceneContainer' ).css( 'display', 'block' );
-    if ( typeof callback == 'function' ) { callback( null ); return; }
-    return null;
-    }, $profile.data( 'delayMsToWaitForPartialExpandedState' )); // end /*1a-timeout*/
-  }; // end: appear()
-
-  //----------------------------------------------------------------------------
-  function disappear( $profile, callback ) {
-    //--------------------------------------------------------------------------
-    if ( !$profile || !$profile.data ||
-         !$profile.data( 'mainTimeline' ) ) {
-      if(plugin.globals.logging){plugin.statusLog( "  ..*7c: scroll_events.js disappear() no profile or profile.mainTimeline. IGNORED *");}
-      if ( typeof callback == 'function' ) { callback( null ); return; }
-      return null;
-    }
-    if(plugin.globals.logging){plugin.statusLog( "  ..*7c.1: scroll_events.js disappear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW expanded. Start collapsing it. *" );}
-
-    $profile.data( 'mainTimeline' ).play();
-    //$profile.data( 'mainTimelineIsReversed', false );
-
-    if(plugin.globals.logging){plugin.statusLog( " ..*7c.2: scroll_events.js disappear() Waiting '" + $profile.data( 'delayMsToWaitForPartialCollapsedState' ) + "'ms for Halftone image for '" + $profile.data( 'photoTag' ) + "' to PARTIALLY collapse. *" );}
-    setTimeout(function() {
-    /*1a-Resume here when WaitForPartialCollapsedState Timeout done*/
-    if(plugin.globals.logging){plugin.statusLog( " ..*7c.3: scroll_events.js disappear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW PARTIALLY collapsed. *" );}
-    //plugin.closeSceneContainer( $profile );
-    $profile.data( '$sceneContainer' ).css( 'display', 'none' );
-    if ( typeof callback == 'function' ) { callback( null ); return; }
-    return null;
-  }, $profile.data( 'delayMsToWaitForPartialCollapsedState' )); // end /*1a-timeout*/
-  }; // end: disappear()
-
-  //----------------------------------------------------------------------------
-  function playTimelineForwards( _this, tcb ) {
-    //----------------------------------------------------------------------------
-    if (_this.logging){console.log( " ..*4.2) playTimelineForwards(): will set isReversed to 'false' *");}
-    tcb.gsapTimeline.play(); //pause(5);
-    tcb.isReversed = false;
-  }; // end: playTimelineForwards()
-
-  //----------------------------------------------------------------------------
-  function playTimelineBackwards( _this, tcb ) {
-    //----------------------------------------------------------------------------
-    if (_this.logging){console.log( " ..*4.3) playTimelineBackwards(): will set isReversed to 'true' *");}
-    tcb.gsapTimeline.reverse();
-    tcb.isReversed = true;
-  }; // end: playTimelineBackwards()
-
   return plugin;
 } ( jQuery, TrrPePlugin || {} ) );
-
-===============================================
-// Private methods in context of plugIn instance, i.e. this
-// // NOTE: Private methods MUST use _this to get 'this' for this instance of TrrPlugin
-
-//----------------------------------------------------------------------------
-function scrollTo( _this, options, callback ) {
-  //----------------------------------------------------------------------------
-  var $scrolledToElem = ( options.toPhotoTag ? null : $( options.event.currentTarget ) ),
-      toPhotoTag = options.toPhotoTag || $scrolledToElem.attr( 'photoTag' ),
-      $toPhotoImg = $( '#' + 'newPhoto' + toPhotoTag.charAt( 0 ).toUpperCase() + toPhotoTag.slice(1).toLowerCase() ),
-      fromPhotoTag = _this.activeStory.tag;
-  //alert( "Clicked on ScrollTo '" + $scrolledToElem.attr( 'photoTag' ) + ".  Active halftone profile: '" + _this.activeStory.tag + "'. *" );
-  console.log( " ..*4.5) scrollTo() Scroll To: '" + toPhotoTag + ".  Scroll From: '" + fromPhotoTag + "'. *" );
-
-  var fromStory = _this.activeStory;
-  if ( !fromStory.timelines ||
-       !fromStory.timelines.main ) {
-    alert( "Scroll From: '" + fromPhotoTag + "'. A story has not been created for this photo yet! You MUST create animationElements first via the 'Particles, Elements' links." );
-    if ( typeof callback == 'function' ) { callback( toPhotoTag ); return; }
-    return toPhotoTag;
-  }
-
-  photoTagToStory( _this, toPhotoTag,
-  /*1-Resume here when done*/ function( results ) {
-  if ( !results.isFound ||
-       !results.item.timelines ||
-       !results.item.timelines.main ) {
-    alert( "Scroll To: '" + toPhotoTag + "'. A story has not been created for this photo yet! You MUST create animationElements first via the 'Particles, Elements' links." );
-    if ( typeof callback == 'function' ) { callback( toPhotoTag ); return; }
-    return toPhotoTag;
-  }
-  var toStory = results.item;
-
-  //----------------------------------------------------------------------------
-  // 1) Make sure selected photo animation Stage shows an expanded image.
-  //    Then start its collapse.
-  //----------------------------------------------------------------------------
-  var story = fromStory;
-  // NOTE: after elements are built they form an expanded image.
-  var delayMsToWaitForStartState = 0;
-  console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' is CURRENTLY '" + (story.timelines.main.isReversed ? 'expanded' : 'collapsed' ) + "'. *" );
-  // Note: collapse.isReversed means "image is expanded"
-  if ( !story.timelines.main.isReversed ) {
-    delayMsToWaitForStartState = 2000;
-    console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' IS NOW collapsed. Start expanding it. *" );
-    story.timelines.main.gsapTimeline.reverse();
-    story.timelines.main.isReversed = true;
-  }
-  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForStartState + "'ms for From Story Halftone image for '" + fromPhotoTag + "' to expand. *" );
-  setTimeout(function() {
-  /*1a-Resume here when WaitForStartState Timeout done*/
-  console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' IS NOW expanded. Start collapsing it. *" );
-  story.timelines.main.gsapTimeline.play();
-  story.timelines.main.isReversed = false;
-  var delayMsToWaitForCollapsedState = 2000;
-  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForCollapsedState + "'ms for From Story Halftone image for '" + fromPhotoTag + "' to collapse. *" );
-  setTimeout(function() {
-  /*1b-Resume here when WaitForCollapsedState Timeout done*/
-  console.log( " ..*4.5) scrollTo() From Story: Halftone image for '" + fromPhotoTag + "' IS NOW collapsed. " +
-               "Select, display photo we are scrolling to ('" + toPhotoTag + "'). *" );
-
-  //----------------------------------------------------------------------------
-  // 2) Select, display photo we are scrolling to.
-  //    Make sure selected photo animation Stage shows a collapsed image.
-  //    Then start its expansion.
-  //----------------------------------------------------------------------------
-  // Select, display photo we are scrolling to. NOTE: set new _this.activeStory.
-  newPhoto( _this, { photoTag: toPhotoTag, photoType: $toPhotoImg.attr('photoType'), imgSrc: $toPhotoImg.attr('data-src') },
-  /*1c-Resume here when newPhoto(toPhotoTag) done*/ function( image ) {
-  story = toStory;
-  console.log( " ..*4.5) scrollTo() To Story: Photo for '" + toPhotoTag + "' IS NOW being displayed as a '" +
-               (story.timelines.main.isReversed ? 'expanded' : 'collapsed' ) + "' Halftone image. *" );
-
-  delayMsToWaitForCollapsedState = 0;
-  if ( story.timelines.main.isReversed ) {
-    delayMsToWaitForCollapsedState = 2000;
-    console.log( " ..*4.5) scrollTo() To Story: Halftone image for '" + toPhotoTag + "' is now expanded. Start collapsing it. *" );
-    story.timelines.main.gsapTimeline.play();
-    story.timelines.main.isReversed = false;
-  }
-  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForCollapsedState + "'ms for To Story Halftone image for '" + fromPhotoTag + "' to collapse. *" );
-  setTimeout(function() {
-  /*1d-Resume here when WaitForCollapsedState Timeout done*/
-  console.log( " ..*4.5) scrollTo() To Story: Halftone image for '" + toPhotoTag + "' IS NOW collapsed. Start expanding it. *" );
-  story.timelines.main.gsapTimeline.reverse();
-  story.timelines.main.isReversed = true;
-  delayMsToWaitForExpandedState = 2000;
-  console.log( " ..*4.5) scrollTo() Waiting '" + delayMsToWaitForExpandedState + "'ms for To Story Halftone image for '" + fromPhotoTag + "' to expand. *" );
-  setTimeout(function() {
-  /*1e-Resume here when WaitForExpandedState Timeout done*/
-  console.log( " ..*4.5) scrollTo() To Story: Halftone image for '" + toPhotoTag + "' IS NOW expanded. *" );
-  // To Story:
-  }, delayMsToWaitForExpandedState); // end /*1e-timeout*/
-  }, delayMsToWaitForCollapsedState); // end /*1d-timeout*/
-
-  // From Story:
-  /*1c-*/}); }, delayMsToWaitForCollapsedState); // end /*1b-timeout*/
-  }, delayMsToWaitForStartState); // end /*1a-timeout*/
-  if ( typeof callback == 'function' ) { callback( toPhotoTag ); return; }
-  return toPhotoTag;
-  /*1-*/});
-}; // end: scrollTo()
-
-======================================
-
-//----------------------------------------------------------------------------
-function calcCoreXY( _this, options, particle ) {
-  //----------------------------------------------------------------------------
-  var coreX = _this.settings.createAnimationElementsParams.collapsedCoreX,
-      coreY = _this.settings.createAnimationElementsParams.collapsedCoreY;
-  if ( _this.settings.createAnimationElementsParams.isRandomizeCollapsedCore ) {
-    coreX = getRandom( _this.settings.animationPanelLeftBoundaryX, _this.settings.animationPanelRightBoundaryX );
-    coreY = getRandom( _this.settings.animationPanelTopBoundary, _this.settings.animationPanelBottom );
-  }
-  return {
-    coreX: coreX,
-    coreY: coreY
-  };
-}; // end calcCoreXY()
-
-===============================
-// Private methods in context of plugIn instance, i.e. this
-// // NOTE: Private methods MUST use _this to get 'this' for this instance of TrrPlugin
-
-//----------------------------------------------------------------------------
-function playSelectedStory( _this, options, /*Code to resume when done*/ callback ) {
-  //--------------------------------------------------------------------------
-  console.log( " ..*4.2) playSelectedStory() for activeStory: '" + _this.activeStory.tag + "' *");
-
-  // Hide the active/visible sceneContainer, we will replace it with ours.
-  closeActiveSceneContainer( _this,
-  /*1-Resume here when done*/ function( activeScene ) {
-  tagToScene( _this, 'elements', _this.activeStory,
-  /*2-Resume here when done*/ function( result ) {
-  openSceneContainer( _this, result.item );
-
-  // Play story for active/selectedPhoto. All scenes, i.e. expand and collapse.
-  playStory( _this, _this.activeStory.tag, options,
-  /*3-Resume here when done*/ function( story ) {
-  if ( typeof callback == 'function' ) { callback( story ); return; }
-  return story;
-  /*3-*/});/*2-*/});/*1-*/});
-}; // end: playSelectedStory()
-
-//----------------------------------------------------------------------------
-function playFullStory( _this, photoTag, options, /*Code to resume when done*/ callback ) {
-  //--------------------------------------------------------------------------
-  console.log( " ..*4.2) playFullStory() create ParticleMap, animation elements, play story for '" + photoTag + "'. All scenes, i.e. expand and collapse. *");
-
-  elements( _this, {
-    isOnlyIfNewParticleMap: false,
-    isRenderElementsImage: true,
-    isCreateElementsObjArray: false,
-    tweenDuration: 3,
-    isCreateSceneInCenterPanel: true,
-  },
-  /*1-Resume here when done*/ function( activeScene ) {
-  // Play story for active/selectedPhoto. All scenes, i.e. expand and collapse.
-  playStory( _this, photoTag, options,
-  /*2-Resume here when done*/ function( story ) {
-  if ( typeof callback == 'function' ) { callback( story ); return; }
-  return story;
-  /*1-*/});
-  /*1-*/});
-}; // end: playFullStory()
-
-//----------------------------------------------------------------------------
-function playStory( _this, photoTag, options, /*Code to resume when done*/ callback ) {
-  //--------------------------------------------------------------------------
-  console.log( " ..*4.2) playStory() Play story for '" + photoTag + "'. All scenes, i.e. expand and collapse. *");
-
-  photoTagToStory( _this, photoTag,
-  /*1-Resume here when done*/ function( result ) {
-  if ( !result.isFound ||
-       (!result.item.timelines ||
-        !result.item.timelines.main ) ) {
-    alert( "photoTag: '" + photoTag + "'. A story has not been created for this photo yet! You MUST create animationElements first via the 'Elements' link." );
-    if ( typeof callback == 'function' ) { callback( null ); return; }
-    return null;
-  }
-  // NOTE: after elements are built they form an expanded image.
-  var story = result.item;
-  var delayMsToWaitForStartState = 0;
-  // Note: collapse.isReversed means "image is expanded"
-  if ( !story.timelines.main.isReversed ) {
-    delayMsToWaitForStartState = 2000;
-    story.timelines.main.gsapTimeline.reverse();
-    story.timelines.main.isReversed = true;
-  }
-  // Wait for image to get into start position.
-  setTimeout(function() {
-  /*1a-Resume here when Timeout done*/
-  // Collapse the image.
-  story.timelines.main.gsapTimeline.play();
-  story.timelines.main.isReversed = false;
-  // Wait for collapse to complete.
-  var delayMsToWaitForCollapsedState = 2500;
-  setTimeout(function() {
-  /*1b-Resume here when Timeout done*/
-  // Expand the collapse image back to a full image.
-  story.timelines.main.gsapTimeline.reverse();
-  story.timelines.main.isReversed = true;
-  // Wait for expand to complete.
-  var delayMsToWaitForExpandedState = 1000;
-  setTimeout(function() {
-  /*1c-Resume here when Timeout done*/
-  if ( typeof callback == 'function' ) { callback( story ); return; }
-  return story;
-  }, delayMsToWaitForExpandedState); // end /*1c-timeout*/
-  }, delayMsToWaitForCollapsedState); // end /*1b-timeout*/
-  }, delayMsToWaitForStartState); // end /*1a-timeout*/
-  /*1-*/});
-}; // end: playStory()
-
-
-================================
-  //----------------------------------------------------------------------------
-  plugin.addScrollEvents = function( callback ) {
-    //--------------------------------------------------------------------------
-    console.log( "  ..*1a: scroll_events.js: plugin.addScrollEvents() For " + plugin.globals.photos.length + " photos.*" );
-
-    var last_photo = plugin.globals.photos.length - 1;
-    $.each( plugin.globals.photos, function( index, el ) {
-      var $el = $(el),
-          photoTag = plugin.globals.photoTags[ index ];
-      $el.attr( 'id', ('trr-pe-photo-' + (index + '') ) )
-         .attr( 'trr-pe-photo-idx', index + '' )
-         .attr( 'trr-pe-tag', photoTag );
-      $el.data( 'previousProfile', ( index == 0 ? undefined : plugin.globals.photos[ index - 1 ]) );
-      $el.data( 'previousProfileTag', ( index == 0 ? undefined : plugin.globals.photoTags[ index - 1 ]) );
-      $el.data( 'nextProfile', ( index == last_photo ? undefined : plugin.globals.photos[ index + 1 ]) );
-      $el.data( 'nextProfile', ( index == last_photo ? undefined : plugin.globals.photos[ index + 1 ]) );
-      add_scroll_event( index, $el, plugin.globals.photoTags[ index ],
-      /*1a-Resume here when done*/ function() {
-      if ( index == last_photo ) {
-        plugin.statusLog( "  ..*1a: scroll_events.js: END data to html conversion.*" );
-        if ( typeof callback == 'function' ) { callback( null ); return; }
-        return null;
-      }
-      /*1a-*/});
-    }); // end of $.each(photos)
-  }; // end: addScrollEvents()

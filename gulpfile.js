@@ -30,11 +30,13 @@ gulp.task( 'default', function() {
     './js/globals.js',
     './js/lib.js',
     './js/init.js',
-    './js/scroll_events.js',
-    './js/page_fixups.js',
-
-    // for the canvas-dots effect extensions.
     './js/elements.js',
+    './js/scroll_events.js',
+
+    // other
+    './js/page_fixups.js',
+    
+    // for the canvas-dots effect extensions.
     './images/laura_particles.js',
     './images/gary_particles.js',
     './images/chris_particles.js',
@@ -42,7 +44,7 @@ gulp.task( 'default', function() {
 
     ])
     .pipe(debug({title: 'Loaded:'}))
-    .pipe(concat( 'trr_photo_effects.0.2.1.min.js' ))
+    .pipe(concat( 'trr_photo_effects.0.2.2.min.js' ))
     .pipe(uglify())
     .pipe(gulp.dest('./dist/v02'))
     .pipe(debug());

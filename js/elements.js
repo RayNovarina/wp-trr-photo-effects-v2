@@ -204,7 +204,7 @@ var TrrPePlugin = ( function( $, plugin ) {
         // i.e. fade.
         autoAlpha: 0,
         //ease: Power0.easeInOut,
-      },
+      }
     ); // end TweenMax.to()
   }; // end tweenExpandedPositionSVGelement()
 
