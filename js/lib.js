@@ -1,7 +1,7 @@
 "use strict";
 
 var TrrPePlugin = ( function( $, plugin ) {
-  console.log( "  ..*9: lib.js: loaded. *" );
+  if(plugin.globals.logging){plugin.statusLog( "  ..*9: lib.js: loaded. *" );}
 
   //----------------------------------------------------------------------------
   plugin.createSceneContainer = function( $el ) {
@@ -24,18 +24,18 @@ var TrrPePlugin = ( function( $, plugin ) {
       .insertBefore( $( '.entry-header' ) )
     );
     var $sceneContainer = $( $el.data( 'sceneContainer' ) );
-    plugin.statusLog( " ..*9.2: lib.js: plugin.createSceneContainer() <div> NOW: id: '" + $sceneContainer.attr( 'id' ) +
+    if(plugin.globals.logging){plugin.statusLog( " ..*9.1: lib.js: plugin.createSceneContainer() <div> NOW: id: '" + $sceneContainer.attr( 'id' ) +
                  "'.  width: '" + $sceneContainer.css( 'width' ) +
                  "'.  height: '" + $sceneContainer.css( 'height' ) +
                  "'. Offset left: '" + $sceneContainer.css( 'left' ) +
-                 "'. top: '" + $sceneContainer.css( 'top' ) + "'. *");
+                 "'. top: '" + $sceneContainer.css( 'top' ) + "'. *");}
   }; // end: createSceneContainer()
 
   //----------------------------------------------------------------------------
   plugin.getParticlesFromDataFile = function( $el, callback ) {
     //----------------------------------------------------------------------------
-    plugin.statusLog( " ..*9.3: lib.js: plugin.getParticlesFromDataFile() for '" + $el.data( 'photoTag' ) +
-                      "'. From data file: '" + $el.data( 'photoTag' ) + '_particles_data' + "'. *");
+    if(plugin.globals.logging){plugin.statusLog( " ..*9.2: lib.js: plugin.getParticlesFromDataFile() for '" + $el.data( 'photoTag' ) +
+                      "'. From data file: '" + $el.data( 'photoTag' ) + '_particles_data' + "'. *");}
 
     // NOTE: .js file contains a string that was evaluated by javascript when the
     // file loaded. Example:
@@ -63,7 +63,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.createParticlesInfoFromDataTypeHashArray = function( $el, data_file_var, callback ) {
     //----------------------------------------------------------------------------
-    plugin.statusLog( " ..*9.4: lib.js: plugin.createParticlesInfoFromDataTypeHashArray() *");
+    if(plugin.globals.logging){plugin.statusLog( " ..*9.3: lib.js: plugin.createParticlesInfoFromDataTypeHashArray() *");}
     // TypeHashArray: convert from JSON string of hash objects. Each hash object
     // already is of our format pixel(x,y,r), so nothing more to reformat.
     var particlesHashArray = data_file_var.data;
@@ -114,9 +114,9 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.openSceneContainer = function( $el ) {
     //----------------------------------------------------------------------------
-    console.log( " ..*9.5: lib.js: openSceneContainer() sceneTag: '" +
+    if(plugin.globals.logging){plugin.statusLog( " ..*9.4: lib.js: openSceneContainer() sceneTag: '" +
                  ( $el.data( '$sceneContainer' ) ? ($el.data( 'photoTag' ) + "'. sceneContainer.id: '" + $el.data( '$sceneContainer' ).attr('id'))
-                           : '*none' ) + "'. *");
+                           : '*none' ) + "'. *");}
     if ( !$el.data( '$sceneContainer' ) ) {
       return;
     }
@@ -126,9 +126,9 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.closeSceneContainer = function( $el ) {
     //----------------------------------------------------------------------------
-    console.log( " ..*9.6: lib.js: closeSceneContainer() sceneTag: '" +
+    if(plugin.globals.logging){plugin.statusLog( " ..*9.5: lib.js: closeSceneContainer() sceneTag: '" +
                  ( $el.data( '$sceneContainer' ) ? ($el.data( 'photoTag' ) + "'. sceneContainer.id: '" + $el.data( '$sceneContainer' ).attr('id'))
-                         : '*none' ) + "'. *");
+                         : '*none' ) + "'. *");}
     if ( !$el.data( '$sceneContainer' ) ) {
       return;
     }

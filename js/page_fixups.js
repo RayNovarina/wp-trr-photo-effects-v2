@@ -1,9 +1,10 @@
 "use strict";
 
 var TrrPePlugin = ( function( $, plugin ) {
-  console.log( "  ..*4: page_fixups.js: loaded. *" );
+  if(plugin.globals.logging){plugin.statusLog( "  ..*4: page_fixups.js: loaded. *" );}
+
   plugin.pageFixups = function( callback ) {
-    console.log( "  ..*4: page_fixups.js: plugin.pageFixups() *" );
+    if(plugin.globals.logging){plugin.statusLog( "  ..*4: page_fixups.js: plugin.pageFixups() *" );}
 
     page_fixups_common(
     /*1-Resume here when done*/ function() {
@@ -15,7 +16,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   }; // end: pageFixups()
 
   function page_fixups_common( callback ) {
-    console.log( "  ..*4a: page_fixups.js: plugin.page_fixups_common() *" );
+    if(plugin.globals.logging){plugin.statusLog( "  ..*4a: page_fixups.js: plugin.page_fixups_common() *" );}
     //$('.page-id-874 header').html()
 
     //$('.page-id-874 header').toArray()[0]
@@ -88,12 +89,12 @@ var TrrPePlugin = ( function( $, plugin ) {
     var effect_class_ref = plugin.globals.photo_effect_class_ref + plugin.globals.dots_effect.photo_effect_class_ref,
         photos_with_my_effect = $( effect_class_ref );
     if ( photos_with_my_effect.length == 0 ) {
-      plugin.statusLog( "  ..*4b.1: trr_page_fixups_for_dots_effect(): WP page class '" + effect_class_ref + "' NOT FOUND.'*");
+      if(plugin.globals.logging){plugin.statusLog( "  ..*4b.1: trr_page_fixups_for_dots_effect(): WP page class '" + effect_class_ref + "' NOT FOUND.'*");}
       callback();
       return;
     }
 
-    plugin.statusLog( "  ..*4b.2: trr_page_fixups_for_dots_effect(): for WP page class '" + effect_class_ref + "'. References = " + photos_with_my_effect.length + "*");
+    if(plugin.globals.logging){plugin.statusLog( "  ..*4b.2: trr_page_fixups_for_dots_effect(): for WP page class '" + effect_class_ref + "'. References = " + photos_with_my_effect.length + "*");}
 
     // $('.entry-header').html()
     //"<h1 class="entry-title ">Translarity Management Team</h1><hr class="featurette-divider __before_content">        "

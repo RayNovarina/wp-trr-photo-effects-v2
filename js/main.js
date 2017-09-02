@@ -1,16 +1,16 @@
 "use strict";
 
 jQuery( document ).ready(function() {
-  console.log( "  ..*1.main.js: documentReady() *" );
+  //console.log( "  ..*1.main.js: documentReady() *" );
 
   TrrPePlugin = ( function( $, plugin ) {
-    console.log( "  ..*1a.main.js: anonFunction() going to call plugin.createGlobals() *" );
+    if(plugin.globals.logging){plugin.statusLog( "  ..*1a.main.js: anonFunction() going to call plugin.createGlobals() *" );}
     plugin.createGlobals(
     /*1-Resume here when done*/ function( returnObj ) {
     plugin.init(
     /*2-Resume here when done*/ function( returnObj ) {
     if ( !plugin.globals.status.enabled ) {
-      console.log( "  ..*1a.main.js: anonFunction() globals.status NOT enabled, terminating. *" );
+      if(plugin.globals.logging){plugin.statusLog( "  ..*1a.main.js: anonFunction() globals.status NOT enabled, terminating. *" );}
       return;
     }
     plugin.pageFixups(
@@ -19,7 +19,7 @@ jQuery( document ).ready(function() {
     /*4-Resume here when done*/ function( returnObj ) {
     plugin.generateAnimationElements(
     /*5-Resume here when done*/ function( returnObj ) {
-    plugin.statusLog( "  ..*1c.main.js: Init done *" );
+    if(plugin.globals.logging){plugin.statusLog( "  ..*1c.main.js: Init done *" );}
     /*5-*/});/*4-*/});/*3-*/});/*2-*/});/*1-*/});
 
     return plugin;

@@ -167,6 +167,173 @@ boneyard snippets:
 <script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/images/laura_particles.js">
 </script><script src="http://localhost:8888/Sites/wordpress-5-exploding-profiles/wp-content/plugins/trr-photo-effects-v2/js/main.js"></script></div>
 
+==============================================
+
+if ( event.state == 'DURING' ) {
+  // 'moving_up_into_view'
+  // previous/active image disappears, new one appears.
+  plugin[ $scrolledToProfile.data( 'disappearMethod' ) ]( $scrolledToProfile.data( '$previousProfile' ),
+  /*1-Resume here when done*/ function() {
+  plugin[ $scrolledToProfile.data( 'appearMethod' ) ]( $scrolledToProfile,
+  /*1a-Resume here when done*/ function() {
+  return;
+  /*1a-*/});/*1-*/});
+} else { // event.state == 'BEFORE' which means 'moving_down_out_of_view'
+
+===============================
+
+"use strict";
+
+var TrrPePlugin = ( function( $, plugin ) {
+  if(plugin.globals.logging){plugin.statusLog( "  ..*7: scroll_events.js: loaded. *" );}
+
+  //----------------------------------------------------------------------------
+  plugin.add_scroll_event = function( $el, callback ) {
+    //--------------------------------------------------------------------------
+    if(plugin.globals.logging){plugin.statusLog( "  ..*7a: scroll_events.js add_scroll_event() for photo: '" + $el.data( 'photoTag' ) + ":" + $el.attr( 'id' ) + "'. *" );}
+    var img_position = $el.position(),
+        img_height = $el.height(),
+        triggerElement_offset_y = img_height * 2,
+        triggerElement_selector = "#" + $el.attr( 'id' );
+        $el.data( 'delayMsToWaitForPartialCollapsedState', plugin.globals.tweenDuration * 950 ); // 95% of 2 seconds.
+        $el.data( 'delayMsToWaitForPartialExpandedState', plugin.globals.tweenDuration * 200 ); // 20% of 2 seconds.
+
+    if(plugin.globals.logging){plugin.statusLog( "  ..*7a.1: scroll_events.js add_scroll_event() photo.position.top: '" + img_position.top +
+                      "'.  photo.height: '" + img_height +
+                      "'.  triggerElement_selector: '" + triggerElement_selector +
+                      "'.  triggerElement_offset_y: '" + triggerElement_offset_y +
+                      "'.  delayMsToWaitForPartialCollapsedState: '" + $el.data( 'delayMsToWaitForPartialCollapsedState' ) +
+                      "'.  delayMsToWaitForPartialExpandedState: '" + $el.data( 'delayMsToWaitForPartialExpandedState' ) +
+                      "'. *" );}
+
+    // Add scrollMagic hook for this photo.
+    // create a scene
+    // trigger position:
+    //   default: element CROSSES THE MIDDLE of the viewport
+    //   onEnter: element CROSSES THE BOTTOM of the viewport - either scroll up or down.
+    //   onLeave: element
+    //
+    new ScrollMagic.Scene({
+        // trigger point is the bio Title line.
+        // triggerElement: '.bio-container-for-' + $(el).attr( 'id')
+        //+ ' .info' + ' .title', // point of execution
+        triggerElement: triggerElement_selector, // point of execution
+        triggerHook: 'onEnter', // on enter from the bottom.
+        offset: triggerElement_offset_y
+    })
+    .on('start', function (event) {
+        plugin.scrollTo( event );
+    })
+    .addTo( plugin.globals.scrollMagic_controller ); // assign the scene to the controller
+
+    if ( typeof callback == 'function' ) { callback( null ); return; }
+    return null;
+  };// end: add_scroll_event()
+
+  //----------------------------------------------------------------------------
+  plugin.scrollTo = function( event ) {
+    //--------------------------------------------------------------------------
+    // event.scrollDirection:
+    //    PAUSED:
+    // event.state:
+    //    DURING  - scroll down
+    //    BEFORE  - scroll up
+    var $scrolledToProfile = $( event.currentTarget.triggerElement() ); // i.e. the <img> tag.
+    if(plugin.globals.logging){plugin.statusLog( "  ..*7a.2: scroll_events.js ScrollMagic event: '" +
+                      event.scrollDirection + ": " + event.state +
+                      "'. toPhotoTag: '" + $scrolledToProfile.data( 'photoTag' ) +
+                      "'. previousProfile.photoTag: '" + ($scrolledToProfile.data( 'previousProfileTag' ) || '*none*') +
+                      "'. nextProfileTag: '" + ($scrolledToProfile.data( 'nextProfileTag' ) || '*none*') +
+                      "'. *" );}
+
+    // showing laura. scroll down to gary. Scroll event is for gary (me), laura is previous.
+    if ( event.state == 'DURING' ) {
+      // 'moving_up_into_view'
+      disappear( $scrolledToProfile.data( '$previousProfile' ),
+      /*1-Resume here when done*/ function() {
+      appear( $scrolledToProfile,
+      /*1a-Resume here when done*/ function() {
+      return;
+      /*1a-*/});/*1-*/});
+    } else { // event.state == 'BEFORE' which means 'moving_down_out_of_view'
+      disappear( $scrolledToProfile,
+      /*2-Resume here when done*/ function() {
+      appear( $scrolledToProfile.data( '$previousProfile' ),
+      /*2a-Resume here when done*/ function() {
+      return;
+      /*2a-*/});/*2-*/});
+    }
+  };// end: scrollTo()
+
+  //----------------------------------------------------------------------------
+  function appear( $profile, callback ) {
+    //--------------------------------------------------------------------------
+    if ( !$profile || !$profile.data ||
+         !$profile.data( 'mainTimeline' ) ) {
+      if(plugin.globals.logging){plugin.statusLog( "  ..*7b: scroll_events.js appear() no profile or profile.mainTimeline. IGNORED *");}
+      if ( typeof callback == 'function' ) { callback( null ); return; }
+      return null;
+    }
+
+    if(plugin.globals.logging){plugin.statusLog( "  ..*7b.1: scroll_events.js appear() For photoTag: '" + $profile.data( 'photoTag' ) +
+                      "'. REVERSING profile.mainTimeline. *");}
+    $profile.data( 'mainTimeline' ).reverse();
+    //$profile.data( 'mainTimelineIsReversed', true );
+
+    if(plugin.globals.logging){plugin.statusLog( " ..*7b.2: scroll_events.js appear() Waiting '" + $profile.data( 'delayMsToWaitForPartialExpandedState' ) + "'ms for Halftone image for '" + $profile.data( 'photoTag' ) + "' to PARTIALLY expand. *" );}
+    setTimeout(function() {
+    /*1a-Resume here when WaitForPartialExpandedState Timeout done*/
+    if(plugin.globals.logging){plugin.statusLog( " ..*7b.3: scroll_events.js appear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW PARTIALLY expanded. *" );}
+    //plugin.openSceneContainer( $profile );
+    $profile.data( '$sceneContainer' ).css( 'display', 'block' );
+    if ( typeof callback == 'function' ) { callback( null ); return; }
+    return null;
+    }, $profile.data( 'delayMsToWaitForPartialExpandedState' )); // end /*1a-timeout*/
+  }; // end: appear()
+
+  //----------------------------------------------------------------------------
+  function disappear( $profile, callback ) {
+    //--------------------------------------------------------------------------
+    if ( !$profile || !$profile.data ||
+         !$profile.data( 'mainTimeline' ) ) {
+      if(plugin.globals.logging){plugin.statusLog( "  ..*7c: scroll_events.js disappear() no profile or profile.mainTimeline. IGNORED *");}
+      if ( typeof callback == 'function' ) { callback( null ); return; }
+      return null;
+    }
+    if(plugin.globals.logging){plugin.statusLog( "  ..*7c.1: scroll_events.js disappear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW expanded. Start collapsing it. *" );}
+
+    $profile.data( 'mainTimeline' ).play();
+    //$profile.data( 'mainTimelineIsReversed', false );
+
+    if(plugin.globals.logging){plugin.statusLog( " ..*7c.2: scroll_events.js disappear() Waiting '" + $profile.data( 'delayMsToWaitForPartialCollapsedState' ) + "'ms for Halftone image for '" + $profile.data( 'photoTag' ) + "' to PARTIALLY collapse. *" );}
+    setTimeout(function() {
+    /*1a-Resume here when WaitForPartialCollapsedState Timeout done*/
+    if(plugin.globals.logging){plugin.statusLog( " ..*7c.3: scroll_events.js disappear() Halftone image for '" + $profile.data( 'photoTag' ) + "' IS NOW PARTIALLY collapsed. *" );}
+    //plugin.closeSceneContainer( $profile );
+    $profile.data( '$sceneContainer' ).css( 'display', 'none' );
+    if ( typeof callback == 'function' ) { callback( null ); return; }
+    return null;
+  }, $profile.data( 'delayMsToWaitForPartialCollapsedState' )); // end /*1a-timeout*/
+  }; // end: disappear()
+
+  //----------------------------------------------------------------------------
+  function playTimelineForwards( _this, tcb ) {
+    //----------------------------------------------------------------------------
+    if (_this.logging){console.log( " ..*4.2) playTimelineForwards(): will set isReversed to 'false' *");}
+    tcb.gsapTimeline.play(); //pause(5);
+    tcb.isReversed = false;
+  }; // end: playTimelineForwards()
+
+  //----------------------------------------------------------------------------
+  function playTimelineBackwards( _this, tcb ) {
+    //----------------------------------------------------------------------------
+    if (_this.logging){console.log( " ..*4.3) playTimelineBackwards(): will set isReversed to 'true' *");}
+    tcb.gsapTimeline.reverse();
+    tcb.isReversed = true;
+  }; // end: playTimelineBackwards()
+
+  return plugin;
+} ( jQuery, TrrPePlugin || {} ) );
 
 ===============================================
 // Private methods in context of plugIn instance, i.e. this

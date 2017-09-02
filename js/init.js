@@ -1,24 +1,23 @@
 "use strict";
 
 var TrrPePlugin = ( function( $, plugin ) {
-  console.log( "  ..*3: init.js: loaded. *" );
-  //alert( 'init.js: from TrrPePlugin init.js' );
+  if(plugin.globals.logging){plugin.statusLog( "  ..*3: init.js: loaded AFTER globals.js has already loaded. *" );}
 
   //----------------------------------------------------------------------------
   plugin.init = function( callback ) {
     //--------------------------------------------------------------------------
-    plugin.statusLog( "  ..*3: init.js: plugin.init() *" );
+    if(plugin.globals.logging){plugin.statusLog( "  ..*3a: init.js: plugin.init() *" );}
     // $:
     if (typeof jQuery !== 'undefined') {
       // jQuery is loaded
-      console.debug( "jQuery "+ jQuery.fn.jquery +" loaded" );
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.1: init.js: plugin.init() jQuery "+ jQuery.fn.jquery +" loaded. *" );}
     } //else {
     //  console.debug("$ NOT loaded");
     //}
 
     // ScrollMagic:
     if (typeof ScrollMagic !== 'undefined') {
-      plugin.statusLog( "ScrollMagic v%s loaded", ScrollMagic.version );
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.2: init.js: plugin.init() ScrollMagic v%s loaded", ScrollMagic.version );}
       plugin.globals.scrollMagic_controller = new ScrollMagic.Controller();
     } //else {
     //  console.debug("ScrollMagic NOT loaded");
@@ -26,14 +25,14 @@ var TrrPePlugin = ( function( $, plugin ) {
 
     // TweenMax:
     if (typeof TweenMax !== 'undefined') {
-      plugin.statusLog( "TweenMax v%s loaded", TweenMax.version );
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.3: init.js: plugin.init() TweenMax v%s loaded", TweenMax.version );}
     } //else {
     //  console.debug("TweenMax NOT loaded");
     //}
 
     // ScrollToPlugin:
     //if (typeof ScrollToPlugin !== 'undefined') {
-    //  plugin.statusLog("ScrollToPlugin v%s loaded", ScrollToPlugin.version);
+    //  if(plugin.globals.logging){plugin.statusLog( "  ..*3a.4: init.js: plugin.init() ScrollToPlugin v%s loaded", ScrollToPlugin.version);}
     //} //else {
     //  console.debug("ScrollToPlugin NOT loaded");
     //}
@@ -52,16 +51,16 @@ var TrrPePlugin = ( function( $, plugin ) {
     plugin.globals.target_page_references = $( target_page_class_ref );
     plugin.globals.plugin_references = $( plugin_class_ref );
 
-    plugin.statusLog( "  ..*3a: init.js: plugin.init(): host domain '" +
+    if(plugin.globals.logging){plugin.statusLog( "  ..*3a.5: init.js: plugin.init(): host domain '" +
                       plugin.globals.window_location_origin + "' " +
                       "  fixups_target_page_class_ref '" + target_page_class_ref +
                       "'. References to target_page_id = " + plugin.globals.target_page_references.length +
                       ". plugin class ref '" + plugin_class_ref +
-                      "'. References to plugin class = " + plugin.globals.plugin_references.length + "*");
+                      "'. References to plugin class = " + plugin.globals.plugin_references.length + "*");}
 
     if ( plugin.globals.target_page_references.length == 0 ||
          plugin.globals.plugin_references.length == 0 ) {
-      plugin.statusLog( "  ..*3a.2: init.js: plugin.init(): Plugin not enabled for this page. WP page class or plugin references NOT FOUND. Nothing to do.'*");
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.6: init.js: plugin.init(): Plugin not enabled for this page. WP page class or plugin references NOT FOUND. Nothing to do.'*");}
       plugin.globals.status.enabled = false;
       if ( typeof callback == 'function' ) { callback( null ); return; }
       return null;
@@ -76,13 +75,12 @@ var TrrPePlugin = ( function( $, plugin ) {
     var effect_class_ref = plugin.globals.photo_effect_class_ref + plugin.globals.dots_effect.photo_effect_class_ref;
     plugin.globals.dots_effect.photos = $( effect_class_ref );
     if ( plugin.globals.dots_effect.photos.length == 0 ) {
-      plugin.statusLog( "  ..*3a.3: init.js: plugin.init(): dots photo effect not enabled for this page. " + effect_class_ref + " references NOT FOUND. Nothing to do.'*");
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.7: init.js: plugin.init(): dots photo effect not enabled for this page. " + effect_class_ref + " references NOT FOUND. Nothing to do.'*");}
       plugin.globals.dots_effect.enabled = false;
     } else {
       plugin.globals.dots_effect.enabled = true;
-      plugin.statusLog( "  ..*3a.4: init.js: plugin.init(): dots photo effect enabled for this page. effect class ref '" + effect_class_ref +
-                         "'. References to dots photo effect = " + plugin.globals.dots_effect.photos.length +
-                         " *");
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.8: init.js: plugin.init(): dots photo effect enabled for this page. effect class ref '" + effect_class_ref +
+                         "'. References to dots photo effect = " + plugin.globals.dots_effect.photos.length + " *");}
     }
 
     //----------------------------------------------------------------------------
@@ -100,7 +98,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   //----------------------------------------------------------------------------
   plugin.attachToProfiles = function( callback ) {
     //----------------------------------------------------------------------------
-    plugin.statusLog( "  ..*3b: init.js: plugin.attachToProfiles() For " + plugin.globals.photos.length + " photos.*" );
+    if(plugin.globals.logging){plugin.statusLog( "  ..*3b: init.js: plugin.attachToProfiles() For " + plugin.globals.photos.length + " photos.*" );}
 
     var last_photo = plugin.globals.photos.length - 1;
     $.each( plugin.globals.photos, function( index, el ) {
@@ -119,13 +117,13 @@ var TrrPePlugin = ( function( $, plugin ) {
          .data( 'nextProfileTag', ( index == last_photo ? undefined : plugin.globals.photoTags[ index + 1 ] ) );
       $el.data( '$previousProfile', $( $el.data( 'previousProfile' ) ) );
       $el.data( '$nextProfile', $( $el.data( 'nextProfile' ) ) );
-      plugin.statusLog( "  ..*3b.2: init.js: plugin.attachToProfiles() id: '" + $el.data( 'domIdAttr' ) +
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3b.1: init.js: plugin.attachToProfiles() id: '" + $el.data( 'domIdAttr' ) +
                         "'. PhotoTag: '" + photoTag +
                         "'. previousProfileTag: '" + ($el.data( 'previousProfile' ) ? plugin.globals.photoTags[ index - 1 ] : '*none*') +
                         "'. nextProfileTag: '" + ($el.data( 'nextProfile' ) ? plugin.globals.photoTags[ index + 1 ] : '*none*') +
-                        "'. *" );
+                        "'. *" );}
       if ( index == last_photo ) {
-        plugin.statusLog( "  ..*3b.3: init.js: plugin.attachToProfiles() END *" );
+        if(plugin.globals.logging){plugin.statusLog( "  ..*3b.2: init.js: plugin.attachToProfiles() END *" );}
         if ( typeof callback == 'function' ) { callback( null ); return; }
         return null;
       }
