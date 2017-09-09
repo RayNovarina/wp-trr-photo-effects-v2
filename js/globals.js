@@ -4,7 +4,7 @@ var TrrPePlugin = ( function( $, plugin ) {
   //console.log( "  ..*2a: globals.js: loaded. *" );
 
   plugin.globals = {
-    logging: false,
+    logging: true,
     status: {
       enabled: false,
     },
@@ -19,11 +19,11 @@ var TrrPePlugin = ( function( $, plugin ) {
     fixups_target_page_class_ref: '', // '.page-id-874',
 
     dots_effect: {
-            loaded: true,
-            enabled: false,
-            photo_effect_class: 'trr-pe-canvas-dots',
-            photo_effect_class_ref: '.trr-pe-canvas-dots',
-            photo_effect_elem_def: '<img class="trr-photo-effect trr-pe-canvas-dots title="photo_ur"/>',
+      loaded: true,
+      enabled: false,
+      photo_effect_class: 'trr-pe-canvas-dots',
+      photo_effect_class_ref: '.trr-pe-canvas-dots',
+      photo_effect_elem_def: '<img class="trr-photo-effect trr-pe-canvas-dots title="photo_ur"/>',
     },
   };
 

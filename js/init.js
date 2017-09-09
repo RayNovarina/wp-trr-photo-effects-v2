@@ -17,7 +17,7 @@ var TrrPePlugin = ( function( $, plugin ) {
 
     // ScrollMagic:
     if (typeof ScrollMagic !== 'undefined') {
-      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.2: init.js: plugin.init() ScrollMagic v%s loaded", ScrollMagic.version );}
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.2: init.js: plugin.init() ScrollMagic v" + ScrollMagic.version + " loaded. *" );}
       plugin.globals.scrollMagic_controller = new ScrollMagic.Controller();
     } //else {
     //  console.debug("ScrollMagic NOT loaded");
@@ -25,7 +25,7 @@ var TrrPePlugin = ( function( $, plugin ) {
 
     // TweenMax:
     if (typeof TweenMax !== 'undefined') {
-      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.3: init.js: plugin.init() TweenMax v%s loaded", TweenMax.version );}
+      if(plugin.globals.logging){plugin.statusLog( "  ..*3a.3: init.js: plugin.init() TweenMax v" + TweenMax.version + " loaded. *" );}
     } //else {
     //  console.debug("TweenMax NOT loaded");
     //}
@@ -69,7 +69,7 @@ var TrrPePlugin = ( function( $, plugin ) {
     plugin.globals.status.enabled = true;
     plugin.globals.photos = $( plugin.globals.photo_effect_class_ref ).toArray();
     // HACK:
-    plugin.globals.photoTags = [ "laura", "chris", "gary", "curt" ];
+    plugin.globals.photoTags = [ "meg", "mike", "eduardo" ];
 
     // Determine which extensions are enabled.
     var effect_class_ref = plugin.globals.photo_effect_class_ref + plugin.globals.dots_effect.photo_effect_class_ref;
